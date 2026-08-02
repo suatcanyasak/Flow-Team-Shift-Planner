@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akıllı Vardiya Planlama Sistemi</title>
+    <!-- Tailwind CSS for Professional UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom Checkbox Styling */
+        input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: #ef4444;
+            cursor: pointer;
+        }
+        .staff-suat { background-color: #dbeafe; color: #1e40af; }
+        .staff-eren { background-color: #dcfce7; color: #166534; }
+        .staff-onur { background-color: #f3e8ff; color: #6b21a8; }
+        .staff-yagmur { background-color: #ffedd5; color: #9a3412; }
+        
+        .loader {
+            border-top-color: #3b82f6;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h1 class="text-2xl font-bold text-slate-800">Otomatik Vardiya Dağıtımı</h1>
+            </div>
+            <span class="text-sm font-medium bg-blue-100 text-blue-800 py-1 px-3 rounded-full">4 Kişilik Ekip - 168 Saat</span>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-1 xl:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Constraints (Mazeretler) -->
+        <div class="xl:col-span-4 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+            <div class="bg-slate-100 px-5 py-4 border-b border-slate-200">
+                <h2 class="text-lg font-semibold flex items-center gap-2">
+                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                    Mazeret & İzin Yönetimi
+                </h2>
+                <p class="text-xs text-slate-500 mt-1">Personelin ÇALIŞAMAYACAĞI vardiyaları işaretleyin.</p>
+            </div>
+            
+            <div class="overflow-y-auto max-h-[600px] p-0">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th class="px-4 py-3 font-semibold">Vardiya</th>
+                            <th class="px-1 py-3 font-semibold text-center text-blue-700">SUA</th>
+                            <th class="px-1 py-3 font-semibold text-center text-green-700">ERE</th>
+                            <th class="px-1 py-3 font-semibold text-center text-purple-700">ONU</th>
+                            <th class="px-1 py-3 font-semibold text-center text-orange-700">YAĞ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="constraintsTableBody" class="divide-y divide-slate-100">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-5 border-t border-slate-200 bg-slate-50">
+                <button onclick="startGeneration()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Çizelgeyi Oluştur
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Column: Results -->
+        <div class="xl:col-span-8 flex flex-col gap-6">
+            
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center h-full">
+                <div class="loader border-4 border-slate-100 rounded-full w-12 h-12 mb-4"></div>
+                <p class="text-slate-500 font-medium text-center">Yapay zeka kısıtlamaları analiz ediyor ve en adil matrisi hesaplıyor...</p>
+                <p class="text-xs text-slate-400 mt-2 text-center">Katı kurallar uygulanıyor: En az 36 saat çalışma ve >8 saat dinlenme aralığı.</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4">
+                <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div>
+                    <h3 class="font-bold text-red-800">Planlama Başarısız!</h3>
+                    <p class="text-red-700 text-sm mt-1">Girdiğiniz mazeretler, sistemin "En az 36 saat çalışma" veya "8 saatten kısa mola verilemez" kurallarıyla çakışıyor. Bu mazeretlerle geçerli bir hafta çıkartılamıyor. Lütfen mazeretleri biraz esnetip tekrar deneyin.</p>
+                </div>
+            </div>
+
+            <!-- Dashboard / Results -->
+            <div id="resultsDashboard" class="hidden flex-col gap-6">
+                
+                <!-- Hours Summary Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-4 text-center">
+                        <div class="text-blue-500 font-bold text-lg">Suat</div>
+                        <div id="hours-Suat" class="text-3xl font-black text-slate-700 mt-1">0<span class="text-sm text-slate-400 font-medium ml-1">sa</span></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-green-100 p-4 text-center">
+                        <div class="text-green-500 font-bold text-lg">Eren</div>
+                        <div id="hours-Eren" class="text-3xl font-black text-slate-700 mt-1">0<span class="text-sm text-slate-400 font-medium ml-1">sa</span></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-purple-100 p-4 text-center">
+                        <div class="text-purple-500 font-bold text-lg">Onur</div>
+                        <div id="hours-Onur" class="text-3xl font-black text-slate-700 mt-1">0<span class="text-sm text-slate-400 font-medium ml-1">sa</span></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-orange-100 p-4 text-center">
+                        <div class="text-orange-500 font-bold text-lg">Yağmur</div>
+                        <div id="hours-Yağmur" class="text-3xl font-black text-slate-700 mt-1">0<span class="text-sm text-slate-400 font-medium ml-1">sa</span></div>
+                    </div>
+                </div>
+
+                <!-- Matrix Schedule Table -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-800 text-white px-5 py-4 flex justify-between items-center">
+                        <h2 class="font-semibold flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            Haftalık Çalışma Matrisi
+                        </h2>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left min-w-[800px]">
+                            <thead class="text-xs text-slate-600 uppercase bg-slate-100 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 font-bold text-center border-r border-slate-200 bg-slate-200/50 w-24">Personel</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r border-slate-200 w-28">Pazartesi</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r border-slate-200 w-28">Salı</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r border-slate-200 w-28">Çarşamba</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r border-slate-200 w-28">Perşembe</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r border-slate-200 w-28">Cuma</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r border-slate-200 w-28 bg-amber-50/50 text-amber-800">Cumartesi</th>
+                                    <th class="px-2 py-3 font-semibold text-center bg-amber-50/50 text-amber-800 w-28">Pazar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matrixTableBody" class="divide-y divide-slate-200">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const staff = ["Suat", "Eren", "Onur", "Yağmur"];
+        const daysOfWeek = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+        
+        // Vardiyalar
+        const shiftsData = [
+            { id: 0, day: "Pazartesi", time: "07:00 - 15:00", hours: 8, isWeekend: false },
+            { id: 1, day: "Pazartesi", time: "15:00 - 23:00", hours: 8, isWeekend: false },
+            { id: 2, day: "Pazartesi", time: "23:00 - 07:00", hours: 8, isWeekend: false },
+            
+            { id: 3, day: "Salı", time: "07:00 - 15:00", hours: 8, isWeekend: false },
+            { id: 4, day: "Salı", time: "15:00 - 23:00", hours: 8, isWeekend: false },
+            { id: 5, day: "Salı", time: "23:00 - 07:00", hours: 8, isWeekend: false },
+            
+            { id: 6, day: "Çarşamba", time: "07:00 - 15:00", hours: 8, isWeekend: false },
+            { id: 7, day: "Çarşamba", time: "15:00 - 23:00", hours: 8, isWeekend: false },
+            { id: 8, day: "Çarşamba", time: "23:00 - 07:00", hours: 8, isWeekend: false },
+            
+            { id: 9, day: "Perşembe", time: "07:00 - 15:00", hours: 8, isWeekend: false },
+            { id: 10, day: "Perşembe", time: "15:00 - 23:00", hours: 8, isWeekend: false },
+            { id: 11, day: "Perşembe", time: "23:00 - 07:00", hours: 8, isWeekend: false },
+            
+            { id: 12, day: "Cuma", time: "07:00 - 19:00", hours: 12, isWeekend: true },
+            { id: 13, day: "Cuma", time: "19:00 - 07:00", hours: 12, isWeekend: true },
+            
+            { id: 14, day: "Cumartesi", time: "07:00 - 19:00", hours: 12, isWeekend: true },
+            { id: 15, day: "Cumartesi", time: "19:00 - 07:00", hours: 12, isWeekend: true },
+            
+            { id: 16, day: "Pazar", time: "07:00 - 19:00", hours: 12, isWeekend: true },
+            { id: 17, day: "Pazar", time: "19:00 - 07:00", hours: 12, isWeekend: true }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById('constraintsTableBody');
+            
+            shiftsData.forEach((shift, index) => {
+                const isNewDay = index === 0 || shiftsData[index - 1].day !== shift.day;
+                const borderClass = isNewDay && index !== 0 ? 'border-t-2 border-slate-300' : 'border-t border-slate-100';
+                const bgClass = shift.isWeekend ? 'bg-amber-50/40' : 'bg-white';
+                
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-slate-50 transition-colors ${borderClass} ${bgClass}`;
+                
+                tr.innerHTML = `
+                    <td class="px-4 py-2">
+                        <div class="font-bold text-slate-800 text-xs">${shift.day}</div>
+                        <div class="text-[11px] text-slate-500">${shift.time} <span class="bg-slate-200 text-slate-600 px-1 rounded ml-1">${shift.hours}s</span></div>
+                    </td>
+                    <td class="px-1 py-2 text-center"><input type="checkbox" id="chk_${shift.id}_Suat" value="Suat"></td>
+                    <td class="px-1 py-2 text-center"><input type="checkbox" id="chk_${shift.id}_Eren" value="Eren"></td>
+                    <td class="px-1 py-2 text-center"><input type="checkbox" id="chk_${shift.id}_Onur" value="Onur"></td>
+                    <td class="px-1 py-2 text-center"><input type="checkbox" id="chk_${shift.id}_Yağmur" value="Yağmur"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+
+        // setTimeout kullanarak arayüzün kilitlenmesini engelliyoruz
+        function startGeneration() {
+            document.getElementById('resultsDashboard').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+
+            setTimeout(() => { generateSchedule(); }, 100);
+        }
+
+        function generateSchedule() {
+            const unavailabilities = {}; 
+            shiftsData.forEach(shift => {
+                unavailabilities[shift.id] = [];
+                staff.forEach(person => {
+                    const checkbox = document.getElementById(`chk_${shift.id}_${person}`);
+                    if(checkbox && checkbox.checked) { unavailabilities[shift.id].push(person); }
+                });
+            });
+
+            let bestSchedule = null;
+            let iterations = 0;
+            const MAX_ITERATIONS = 300000; // Sonsuz döngü koruması
+            
+            function shuffle(array) {
+                let currentIndex = array.length, randomIndex;
+                while (currentIndex != 0) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+                }
+                return array;
+            }
+
+            function solve(shiftIndex, currentHours, currentSchedule) {
+                iterations++;
+                if (iterations > MAX_ITERATIONS) return false;
+
+                // Tüm vardiyalar atandığında, "Herkes en az 36 saat çalıştı mı?" kontrolü
+                if (shiftIndex === shiftsData.length) {
+                    for (let p of staff) {
+                        if (currentHours[p] < 36) return false;
+                    }
+                    bestSchedule = [...currentSchedule];
+                    return true;
+                }
+
+                const shift = shiftsData[shiftIndex];
+
+                // OPTİMİZASYON KONTROLÜ (Geleceği Görme Pruning'i): 
+                // Eğer haftanın kalan tüm saatlerini versek bile minimum 36 kotası dolmuyorsa, 
+                // bu çıkmaz sokağa girmeden doğrudan geriye dön (backtrack).
+                let remainingHoursInWeek = 0;
+                for (let i = shiftIndex; i < shiftsData.length; i++) {
+                    remainingHoursInWeek += shiftsData[i].hours;
+                }
+                let totalDeficit = 0;
+                for (let p of staff) {
+                    if (currentHours[p] < 36) {
+                        totalDeficit += (36 - currentHours[p]);
+                    }
+                }
+                if (remainingHoursInWeek < totalDeficit) {
+                    return false; // Kurtarılamaz tablo, denemeyi bırak.
+                }
+
+                // Önceliklendirme: Saati düşük olanlara öncelik ver
+                let availableStaff = [...staff];
+                shuffle(availableStaff); 
+                availableStaff.sort((a, b) => currentHours[a] - currentHours[b]);
+
+                for (let person of availableStaff) {
+                    // Mazeret Kontrolü
+                    if (unavailabilities[shift.id].includes(person)) continue;
+
+                    // MAKSİMUM KOTA: Bir kişi teorik olarak en fazla 60 saat çalışabilir. 
+                    // (168 - (36 * 3) = 60). Eğer 60'ı geçerse başkaları 36'ya ulaşamaz.
+                    if (currentHours[person] + shift.hours > 60) continue; 
+
+                    // 8 SAAT ARAYLA ÇALIŞMA YASAĞI (Dinlenme Süresi Kontrolü)
+                    let lastShiftIndex = -1;
+                    for (let i = currentSchedule.length - 1; i >= 0; i--) {
+                        if (currentSchedule[i].person === person) {
+                            lastShiftIndex = currentSchedule[i].shift.id;
+                            break;
+                        }
+                    }
+
+                    if (lastShiftIndex !== -1) {
+                        let breakHours = 0;
+                        // İki vardiya arasındaki toplam boşluğu(mola süresini) hesapla
+                        for (let k = lastShiftIndex + 1; k < shiftIndex; k++) {
+                            breakHours += shiftsData[k].hours;
+                        }
+                        
+                        // Mola 8 saate eşit veya daha kısaysa çalışamaz.
+                        // (Örn: 15:00'te çıkıp 23:00'te gelmek tam 8 saat moladır -> Yasak!)
+                        if (breakHours <= 8) {
+                            continue;
+                        }
+                    }
+
+                    // Şartlar sağlandıysa kişiyi ata
+                    currentSchedule.push({ shift: shift, person: person });
+                    currentHours[person] += shift.hours;
+
+                    // Sonraki vardiyaya geç
+                    if (solve(shiftIndex + 1, currentHours, currentSchedule)) {
+                        return true; 
+                    }
+
+                    // Eğer sonraki vardiyalarda sistem tıkanırsa, bu atamayı geri al ve sıradaki kişiyi dene (Backtrack)
+                    currentHours[person] -= shift.hours;
+                    currentSchedule.pop();
+                }
+                
+                return false; 
+            }
+
+            let initialHours = { "Suat": 0, "Eren": 0, "Onur": 0, "Yağmur": 0 };
+            const success = solve(0, initialHours, []);
+
+            document.getElementById('loadingIndicator').classList.add('hidden');
+
+            if (success && bestSchedule) {
+                renderMatrix(bestSchedule, initialHours);
+                document.getElementById('resultsDashboard').classList.remove('hidden');
+                document.getElementById('resultsDashboard').classList.add('flex');
+            } else {
+                document.getElementById('errorMessage').classList.remove('hidden');
+            }
+        }
+
+        function renderMatrix(schedule, hours) {
+            staff.forEach(person => {
+                document.getElementById(`hours-${person}`).innerHTML = `${hours[person]}<span class="text-sm text-slate-400 font-medium ml-1">sa</span>`;
+            });
+
+            const matrixData = {};
+            staff.forEach(person => {
+                matrixData[person] = {};
+                daysOfWeek.forEach(day => {
+                    matrixData[person][day] = [];
+                });
+            });
+
+            schedule.forEach(item => {
+                matrixData[item.person][item.shift.day].push(item.shift);
+            });
+
+            const tbody = document.getElementById('matrixTableBody');
+            tbody.innerHTML = ''; 
+
+            staff.forEach(person => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                
+                let personClass = '';
+                if(person === 'Suat') personClass = 'staff-suat';
+                else if(person === 'Eren') personClass = 'staff-eren';
+                else if(person === 'Onur') personClass = 'staff-onur';
+                else if(person === 'Yağmur') personClass = 'staff-yagmur';
+
+                let rowHTML = `
+                    <td class="px-2 py-4 font-bold text-center border-r border-slate-200 ${personClass}">
+                        ${person}
+                    </td>`;
+
+                daysOfWeek.forEach(day => {
+                    const shifts = matrixData[person][day];
+                    const isWeekend = (day === 'Cumartesi' || day === 'Pazar');
+                    const bgColClass = isWeekend ? 'bg-amber-50/20' : '';
+                    
+                    let cellHTML = `<td class="px-2 py-3 align-middle text-center border-r border-slate-200 ${bgColClass}">`;
+                    
+                    if (shifts.length > 0) {
+                        cellHTML += `<div class="flex flex-col gap-1.5 items-center justify-center h-full">`;
+                        shifts.forEach(shift => {
+                            const badgeColor = shift.hours === 12 ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 border border-slate-300 text-slate-700 shadow-sm';
+                            
+                            cellHTML += `
+                                <div class="px-2 py-1.5 rounded font-medium text-[11px] whitespace-nowrap w-full ${badgeColor}">
+                                    ${shift.time}
+                                </div>`;
+                        });
+                        cellHTML += `</div>`;
+                    } else {
+                        cellHTML += `
+                            <div class="h-full flex items-center justify-center">
+                                <span class="text-slate-300 font-medium text-xs italic">- İzin -</span>
+                            </div>`;
+                    }
+                    
+                    cellHTML += `</td>`;
+                    rowHTML += cellHTML;
+                });
+
+                tr.innerHTML = rowHTML;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
