@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -563,6 +562,47 @@
             }
         }
 
+        // Yeni eklenen "Düzenle" fonksiyonu
+        function editAcceptedWeek(weekId) {
+            const weekIndex = acceptedWeeks.findIndex(w => w.id === weekId);
+            if (weekIndex === -1) return;
+            
+            const week = acceptedWeeks[weekIndex];
+            
+            // 1. O haftanın taslağını ana düzenleme ekranına geri yükle
+            currentGeneratedSchedule = JSON.parse(JSON.stringify(week.schedule));
+            
+            // 2. Tarih kutusunu ilgili haftanın başlangıcına geri ayarla
+            const yyyy = week.startDateObj.getFullYear();
+            const mm = String(week.startDateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(week.startDateObj.getDate()).padStart(2, '0');
+            document.getElementById('weekStartDate').value = `${yyyy}.${mm}.${dd}`;
+            
+            const endDate = new Date(week.startDateObj);
+            endDate.setDate(endDate.getDate() + 6);
+            const dateDisplay = document.getElementById('dateRangeDisplay');
+            dateDisplay.textContent = `Seçili Aralık: ${week.startDateObj.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
+            dateDisplay.classList.remove('hidden');
+
+            // 3. Haftayı onaylananlardan çıkart (çünkü artık taslakta)
+            acceptedWeeks.splice(weekIndex, 1);
+            
+            syncMonthlyDataFromSchedules();
+            renderHistory();
+            if (acceptedWeeks.length === 0) {
+                document.getElementById('historySection').classList.add('hidden');
+                document.getElementById('historySection').classList.remove('flex');
+            }
+
+            // 4. Taslak ekranını göster
+            renderDraftMatrix(currentGeneratedSchedule);
+            document.getElementById('resultsDashboard').classList.remove('hidden');
+            document.getElementById('resultsDashboard').classList.add('flex');
+            
+            // 5. Yukarı (Taslak ekranına) kaydır
+            document.getElementById('resultsDashboard').scrollIntoView({behavior: 'smooth'});
+        }
+
         function syncMonthlyDataFromSchedules() {
             // Tüm ayları tespit et ve aylık manuel veri yapısını oluştur/güncelle
             let activeMonths = new Set();
@@ -729,6 +769,10 @@
                     <div class="bg-slate-100 px-4 py-3 flex justify-between items-center border-b border-slate-200">
                         <h4 class="font-bold text-slate-800">Tarih: ${week.startDateStr} - ${week.endDateStr} <span class="text-xs bg-white border border-slate-300 px-2 py-0.5 rounded text-slate-600 font-medium ml-2">Hafta ${wIndex + 1}</span></h4>
                         <div class="flex items-center gap-2">
+                            <!-- Yeni Düzenle Butonu -->
+                            <button onclick="editAcceptedWeek(${week.id})" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded transition-colors">
+                                Düzenle
+                            </button>
                             <button onclick="deleteAcceptedWeek(${week.id})" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-3 py-1.5 rounded transition-colors">
                                 Bu Haftayı Sil
                             </button>
