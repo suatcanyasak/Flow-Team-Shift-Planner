@@ -9,6 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- SheetJS for Excel export -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- PDF-Lib for reading and embedding PDF metadata -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <style>
         input[type="checkbox"] { width: 1.25rem; height: 1.25rem; accent-color: #ef4444; cursor: pointer; }
         .staff-suat { background-color: #dbeafe; color: #1e40af; }
@@ -23,12 +25,20 @@
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-12">
 
     <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 py-5 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 py-5 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <h1 class="text-2xl font-bold text-slate-800">Flow Team Shift Planner</h1>
             </div>
-            <span class="text-sm font-medium bg-blue-100 text-blue-800 py-1 px-3 rounded-full">4 Kişilik Ekip - 168 Saat</span>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-medium bg-blue-100 text-blue-800 py-1 px-3 rounded-full hidden sm:block">4 Kişilik Ekip - 168 Saat</span>
+                <!-- PDF İçe Aktar Butonu Başlangıca (Header'a) Taşındı -->
+                <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 cursor-pointer transition-colors" title="Daha önce indirdiğiniz PDF'i buraya yükleyip kaldığınız yerden devam edebilirsiniz.">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    PDF İçe Aktar (Düzenle)
+                    <input type="file" id="pdfImportInput" accept="application/pdf" class="hidden" onchange="importFromPDF(event)">
+                </label>
+            </div>
         </div>
     </header>
 
@@ -166,11 +176,11 @@
             <div id="historySection" class="hidden flex-col gap-6 mt-8 border-t-2 border-slate-200 pt-8">
                 <div class="flex justify-between items-center flex-wrap gap-4">
                     <h2 class="text-2xl font-bold text-slate-800">Onaylanan Çizelgeler & Aylık Çalışma Saatleri</h2>
-                    <div class="flex gap-2">
-                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2">
+                    <div class="flex gap-2 flex-wrap justify-end">
+                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-colors">
                             Excel İndir
                         </button>
-                        <button onclick="exportToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2">
+                        <button onclick="exportToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-colors">
                             PDF İndir
                         </button>
                     </div>
@@ -562,7 +572,6 @@
             }
         }
 
-        // Yeni eklenen "Düzenle" fonksiyonu
         function editAcceptedWeek(weekId) {
             const weekIndex = acceptedWeeks.findIndex(w => w.id === weekId);
             if (weekIndex === -1) return;
@@ -831,7 +840,74 @@
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
                 pagebreak:    { mode: 'css', avoid: '.page-break-avoid' }
             };
-            html2pdf().set(opt).from(element).save();
+
+            // ÖNEMLİ KISIM: Verileri JSON olarak string yapıp, PDF meta verisine gömüyoruz.
+            const stateToSave = {
+                acceptedWeeks: acceptedWeeks,
+                monthlyManualData: monthlyManualData
+            };
+            const stateString = JSON.stringify(stateToSave);
+            // Türkçe/Özel karakter sorununu önlemek için encode + base64 kullanıyoruz.
+            const encodedState = btoa(unescape(encodeURIComponent(stateString)));
+
+            // html2pdf söz verisi (promise) kullanarak kaydetmeden önce araya giriyoruz
+            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
+                // PDF'in Subject (Konu) özellik alanına gizlice verilerimizi ekliyoruz.
+                pdf.setProperties({
+                    subject: "FlowTeamShiftPlannerState:" + encodedState
+                });
+            }).save();
+        }
+
+        // --- YENİ EKLENEN PDF İÇE AKTARMA FONKSİYONU ---
+        async function importFromPDF(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const arrayBuffer = e.target.result;
+                    // PDF-lib yardımıyla dosyayı okuyoruz
+                    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                    const subject = pdfDoc.getSubject();
+
+                    if (subject && subject.startsWith("FlowTeamShiftPlannerState:")) {
+                        const encodedState = subject.replace("FlowTeamShiftPlannerState:", "");
+                        const decodedState = decodeURIComponent(escape(atob(encodedState)));
+                        const state = JSON.parse(decodedState);
+
+                        // String'e dönüşmüş olan tarih (Date) nesnelerini geri Date objesi yapıyoruz
+                        if (state.acceptedWeeks) {
+                            state.acceptedWeeks.forEach(week => {
+                                week.startDateObj = new Date(week.startDateObj);
+                            });
+                            acceptedWeeks = state.acceptedWeeks;
+                        }
+                        if (state.monthlyManualData) {
+                            monthlyManualData = state.monthlyManualData;
+                        }
+
+                        // Ekranı yeni yüklenen verilere göre yeniden çiz
+                        renderHistory();
+                        
+                        document.getElementById('historySection').classList.remove('hidden');
+                        document.getElementById('historySection').classList.add('flex');
+                        
+                        alert("PDF içerisindeki vardiya verileri başarıyla geri yüklendi! Artık düzenlemeye devam edebilirsiniz.");
+                    } else {
+                        alert("Bu PDF dosyası geçerli bir vardiya verisi içermiyor veya içe aktarma özelliği eklenmeden önce oluşturulmuş eski bir sürüm.");
+                    }
+                } catch (error) {
+                    console.error("PDF okuma hatası:", error);
+                    alert("PDF okunurken bir hata oluştu. Lütfen doğru PDF dosyasını seçtiğinizden emin olun.");
+                }
+                
+                // Aynı dosyayı arka arkaya seçebilmek için input'u sıfırlıyoruz.
+                event.target.value = '';
+            };
+            
+            reader.readAsArrayBuffer(file);
         }
 
         function exportToExcel() {
