@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -25,9 +26,12 @@
         .loader { border-top-color: #3b82f6; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .page-break-avoid { page-break-inside: avoid; }
-        .drag-over { border: 2px dashed #3b82f6 !important; opacity: 0.7; }
-        .draggable-shift { cursor: grab; transition: transform 0.1s; }
-        .draggable-shift:active { cursor: grabbing; transform: scale(0.95); }
+        
+        /* Tıkla ve Taşı (Click-to-Move) için Seçili Vardiya Stili */
+        /* Tıkla ve Taşı (Click-to-Move) için Seçili Vardiya Stili */
+        .clickable-shift { cursor: pointer; transition: all 0.15s ease; }
+        .clickable-shift:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .shift-selected { ring-4 ring-red-500 ring-offset-2 scale-105 shadow-lg !border-2 !border-white z-10; outline: 3px solid #ef4444; }
 
         @keyframes shiftSlide {
             0% { transform: scale(0.92) translateY(-8px); opacity: 0.4; }
@@ -74,7 +78,7 @@
             <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col transition-colors">
                 <div class="bg-slate-100 dark:bg-slate-750 px-5 py-4 border-b border-slate-200 dark:border-slate-700">
                     <h2 class="text-lg font-semibold flex items-center gap-2">
-                        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 11-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                         Mazeret & İzin Yönetimi
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Personelin ÇALIŞAMAYACAĞI vardiyaları veya tam gün/hafta izinlerini işaretleyin.</p>
@@ -124,24 +128,24 @@
                 <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex justify-between items-center">
                     <div>
                         <h3 class="font-bold text-blue-800 dark:text-blue-300">Taslak Çizelge Oluşturuldu</h3>
-                        <p class="text-blue-600 dark:text-blue-400 text-sm">Vardiyaları sürükleyip birbirinin üzerine bırakarak personeller arası değişim yapabilirsiniz.</p>
+                        <p class="text-blue-600 dark:text-blue-400 text-sm">Vardiyayı değiştirmek için tablodaki bir hücreye, ardından yer değiştirmek istediğiniz diğer hücreye tıklayın.</p>
                     </div>
                     <button onclick="discardDraft()" class="bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900 text-red-700 dark:text-red-300 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
                         Taslağı Sil
                     </button>
                 </div>
 
-                <!-- Akıllı Sürükle-Bırak Kural İhlal Uyarı Alanı -->
+                <!-- Akıllı Kural İhlal Uyarı Alanı -->
                 <div id="dragWarningContainer" class="hidden bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-amber-800 dark:text-amber-300 text-sm flex items-center gap-3">
                     <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <div id="dragWarningText"><strong>Dikkat:</strong> Yapılan son vardiya değişimi bazı kural ihlallerine yol açtı.</div>
+                    <div id="dragWarningText"><strong>Dikkat:</strong> Mevcut çizelgede bazı kural ihlalleri bulunuyor.</div>
                 </div>
 
                 <div id="draftHoursContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
 
                 <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                     <div class="bg-slate-800 dark:bg-slate-950 text-white px-5 py-4 flex justify-between items-center">
-                        <h2 class="font-semibold flex items-center gap-2">Haftalık Çalışma Matrisi (Önizleme & Sürükle-Bırak)</h2>
+                        <h2 class="font-semibold flex items-center gap-2">Haftalık Çalışma Matrisi (Önizleme & Tıkla-Taşı Düzenleme)</h2>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left min-w-[800px]">
@@ -295,6 +299,7 @@
         let monthlyManualData = {};
         let monthlyChartInstance = null;
         let workloadChartInstance = null;
+        let editingWeekId = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             initSettingsUI();
@@ -434,16 +439,22 @@
             const weekStartMs = new Date(parts[0], parts[1] - 1, parts[2], 7, 0, 0).getTime();
 
             let lastPersonShiftEnds = {};
-            if (acceptedWeeks.length > 0) {
-                const lastWeek = acceptedWeeks[acceptedWeeks.length - 1];
-                const lastWeekStartMs = new Date(lastWeek.startDateObj).getTime();
-                staff.forEach(p => {
-                    let pShifts = lastWeek.schedule.filter(item => item.personId === p.id);
-                    if (pShifts.length > 0) {
-                        pShifts.sort((a, b) => b.shift.id - a.shift.id);
-                        lastPersonShiftEnds[p.id] = lastWeekStartMs + (pShifts[0].shift.endHour * 3600 * 1000);
-                    }
-                });
+            const currentWeekStartDateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+            
+            const priorWeeks = acceptedWeeks.filter(w => new Date(w.startDateObj) < currentWeekStartDateObj);
+            if (priorWeeks.length > 0) {
+                priorWeeks.sort((a, b) => new Date(b.startDateObj) - new Date(a.startDateObj));
+                const lastWeek = priorWeeks[0];
+                if (editingWeekId !== lastWeek.id) {
+                    const lastWeekStartMs = new Date(lastWeek.startDateObj).getTime();
+                    staff.forEach(p => {
+                        let pShifts = lastWeek.schedule.filter(item => item.personId === p.id);
+                        if (pShifts.length > 0) {
+                            pShifts.sort((a, b) => b.shift.id - a.shift.id);
+                            lastPersonShiftEnds[p.id] = lastWeekStartMs + (pShifts[0].shift.endHour * 3600 * 1000);
+                        }
+                    });
+                }
             }
 
             const unavailabilities = {};
@@ -485,7 +496,6 @@
                         const shift = shiftsData[shiftIndex];
                         let avail = [...staffIds].filter(pId => !unavailabilities[shift.id].includes(pId));
                         
-                        // Her adımda uygun personelleri rastgele karıştırarak her yenilemede farklı olası tablolar üretilmesini sağlıyoruz
                         for (let i = avail.length - 1; i > 0; i--) {
                             const j = Math.floor(Math.random() * (i + 1));
                             [avail[i], avail[j]] = [avail[j], avail[i]];
@@ -567,41 +577,16 @@
 
         function discardDraft() {
             currentGeneratedSchedule = null;
+            editingWeekId = null;
+            selectedShiftIdForSwap = null;
             document.getElementById('resultsDashboard').classList.add('hidden');
+            document.getElementById('dragWarningContainer').classList.add('hidden');
         }
 
-        // --- AKILLI SÜRÜKLE-BIRAK & KURAL KONTROLÜ ---
-        let dragSourceId = null;
+        // --- YÖNTEM 1: TIKLA VE TAŞI (CLICK-TO-MOVE / İKİ ADIMLI SEÇİM) ---
+        let selectedShiftIdForSwap = null;
 
-        function handleDragStart(e, shiftId) {
-            dragSourceId = shiftId;
-            e.dataTransfer.effectAllowed = 'move';
-            e.target.classList.add('opacity-50');
-        }
-        function handleDragEnd(e) { e.target.classList.remove('opacity-50'); }
-        function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
-        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-        
-        function handleDrop(e, targetShiftId) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-            if (dragSourceId === null || dragSourceId === targetShiftId) return;
-
-            const sourceItem = currentGeneratedSchedule.find(i => i.shift.id === dragSourceId);
-            const targetItem = currentGeneratedSchedule.find(i => i.shift.id === targetShiftId);
-            
-            if(sourceItem && targetItem) {
-                const temp = sourceItem.personId;
-                sourceItem.personId = targetItem.personId;
-                targetItem.personId = temp;
-                
-                renderDraftMatrix(currentGeneratedSchedule);
-                validateDraftConstraints(currentGeneratedSchedule);
-            }
-            dragSourceId = null;
-        }
-
-        function validateDraftConstraints(schedule) {
+        function getScheduleViolations(schedule) {
             let warnings = [];
             staff.forEach(p => {
                 let pShifts = schedule.filter(i => i.personId === p.id).sort((a,b) => a.shift.startHour - b.shift.startHour);
@@ -610,8 +595,10 @@
                 if (totalHours > settings.maxWeekly) {
                     warnings.push(`${p.name} haftalık maksimum çalışma saatini aştı (${totalHours}s / Max: ${settings.maxWeekly}s).`);
                 }
+                if (totalHours < settings.minWeekly) {
+                    warnings.push(`${p.name} haftalık minimum çalışma saatinin altında kaldı (${totalHours}s / Min: ${settings.minWeekly}s).`);
+                }
 
-                // Min dinlenme kontrolü
                 for (let i = 0; i < pShifts.length - 1; i++) {
                     let rest = pShifts[i+1].shift.startHour - pShifts[i].shift.endHour;
                     if (rest < settings.minRest) {
@@ -619,11 +606,61 @@
                     }
                 }
             });
+            return warnings;
+        }
 
+        function handleShiftClick(shiftId) {
+            if (selectedShiftIdForSwap === null) {
+                // 1. Adım: İlk vardiyayı seç
+                selectedShiftIdForSwap = shiftId;
+                renderDraftMatrix(currentGeneratedSchedule);
+            } else {
+                if (selectedShiftIdForSwap === shiftId) {
+                    // Tekrar kendisine tıklanırsa seçim iptal olsun
+                    selectedShiftIdForSwap = null;
+                    renderDraftMatrix(currentGeneratedSchedule);
+                    return;
+                }
+
+                // 2. Adım: Farklı bir hücre seçildiğinde simüle edip kural ihlallerini kontrol et
+                let tempSchedule = JSON.parse(JSON.stringify(currentGeneratedSchedule));
+                let sourceItem = tempSchedule.find(i => i.shift.id === selectedShiftIdForSwap);
+                let targetItem = tempSchedule.find(i => i.shift.id === shiftId);
+
+                if (sourceItem && targetItem) {
+                    const temp = sourceItem.personId;
+                    sourceItem.personId = targetItem.personId;
+                    targetItem.personId = temp;
+
+                    let violations = getScheduleViolations(tempSchedule);
+                    let message = "";
+                    if (violations.length > 0) {
+                        message = "UYARI: Bu vardiya değişimi aşağıdaki kural ihlallerine yol açacaktır:\n\n• " + violations.join("\n• ") + "\n\nBu değişikliği yine de uygulamak istiyor musunuz?";
+                    } else {
+                        message = "Bu vardiya değişimi hiçbir kural ihlali içermemektedir.\n\nDeğişikliği uygulamak istiyor musunuz?";
+                    }
+
+                    if (confirm(message)) {
+                        // Kullanıcı kabul etti -> kural ihlali olsa da olmasa da uygula
+                        currentGeneratedSchedule = tempSchedule;
+                        selectedShiftIdForSwap = null;
+                        renderDraftMatrix(currentGeneratedSchedule);
+                        validateDraftConstraints(currentGeneratedSchedule);
+                    } else {
+                        // Kullanıcı kabul etmedi -> kural ihlali olsa da olmasa da uygulama (iptal et)
+                        selectedShiftIdForSwap = null;
+                        renderDraftMatrix(currentGeneratedSchedule);
+                    }
+                }
+            }
+        }
+
+        function validateDraftConstraints(schedule) {
+            let warnings = getScheduleViolations(schedule);
             const warningBox = document.getElementById('dragWarningContainer');
             const warningText = document.getElementById('dragWarningText');
             if (warnings.length > 0) {
-                warningText.innerHTML = `<strong>Kural İhlali Tespit Edildi:</strong><br>` + warnings.join('<br>');
+                warningText.innerHTML = `<strong>Mevcut Çizelge Durumu:</strong><br>` + warnings.join('<br>');
                 warningBox.classList.remove('hidden');
             } else {
                 warningBox.classList.add('hidden');
@@ -668,14 +705,12 @@
                         cellHTML += `<div class="flex flex-col gap-1.5 items-center justify-center h-full">`;
                         items.forEach(item => {
                             const badgeBg = hexToRgba(person.color, 0.9);
+                            const isSelected = selectedShiftIdForSwap === item.shift.id;
+                            const selectedClass = isSelected ? 'shift-selected' : '';
+                            
                             cellHTML += `
-                                <div draggable="true" 
-                                     ondragstart="handleDragStart(event, ${item.shift.id})" 
-                                     ondragend="handleDragEnd(event)"
-                                     ondragover="handleDragOver(event)" 
-                                     ondragleave="handleDragLeave(event)" 
-                                     ondrop="handleDrop(event, ${item.shift.id})"
-                                     class="draggable-shift animate-shift-drop flex flex-col items-center justify-center w-full px-2 py-1 rounded shadow-sm text-white" style="background-color:${badgeBg}; min-height:40px;">
+                                <div onclick="handleShiftClick(${item.shift.id})" 
+                                     class="clickable-shift animate-shift-drop flex flex-col items-center justify-center w-full px-2 py-1 rounded shadow-sm text-white ${selectedClass}" style="background-color:${badgeBg}; min-height:40px;">
                                     <span class="text-[11px] font-bold">${item.shift.time}</span>
                                     <span class="text-[9px] opacity-80">${person.name}</span>
                                 </div>`;
@@ -704,21 +739,38 @@
             const weeklyHours = {}; staff.forEach(p => weeklyHours[p.id] = 0);
             currentGeneratedSchedule.forEach(item => weeklyHours[item.personId] += item.shift.hours);
 
-            acceptedWeeks.push({
-                id: Date.now(),
-                startDateObj: startDate,
-                startDateStr: startDate.toLocaleDateString('tr-TR'),
-                endDateStr: endDate.toLocaleDateString('tr-TR'),
-                schedule: JSON.parse(JSON.stringify(currentGeneratedSchedule)),
-                weeklyHours: weeklyHours
+            if (editingWeekId !== null) {
+                const existing = acceptedWeeks.find(w => w.id === editingWeekId);
+                if (existing) {
+                    existing.startDateObj = startDate;
+                    existing.startDateStr = startDate.toLocaleDateString('tr-TR');
+                    existing.endDateStr = endDate.toLocaleDateString('tr-TR');
+                    existing.schedule = JSON.parse(JSON.stringify(currentGeneratedSchedule));
+                    existing.weeklyHours = weeklyHours;
+                }
+                editingWeekId = null;
+            } else {
+                acceptedWeeks.push({
+                    id: Date.now(),
+                    startDateObj: startDate,
+                    startDateStr: startDate.toLocaleDateString('tr-TR'),
+                    endDateStr: endDate.toLocaleDateString('tr-TR'),
+                    schedule: JSON.parse(JSON.stringify(currentGeneratedSchedule)),
+                    weeklyHours: weeklyHours
+                });
+            }
+            acceptedWeeks.sort((a, b) => new Date(a.startDateObj) - new Date(b.startDateObj));
+
+            acceptedWeeks.forEach((w, index) => {
+                w.weekNumber = index + 1;
             });
-            acceptedWeeks.sort((a, b) => a.startDateObj - b.startDateObj);
 
             syncMonthlyDataFromSchedules();
             renderHistory();
 
             document.getElementById('resultsDashboard').classList.add('hidden');
             currentGeneratedSchedule = null;
+            selectedShiftIdForSwap = null;
             document.getElementById('dragWarningContainer').classList.add('hidden');
             
             const nextWeek = new Date(startDate);
@@ -732,8 +784,34 @@
             histSec.scrollIntoView({behavior: 'smooth'});
         }
 
+        function editAcceptedWeek(weekId) {
+            const week = acceptedWeeks.find(w => w.id === weekId);
+            if (!week) return;
+
+            editingWeekId = week.id;
+            currentGeneratedSchedule = JSON.parse(JSON.stringify(week.schedule));
+
+            const dt = new Date(week.startDateObj);
+            const dateInput = document.getElementById('weekStartDate');
+            dateInput.value = `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
+            
+            renderDraftMatrix(currentGeneratedSchedule);
+            document.getElementById('resultsDashboard').classList.remove('hidden');
+            document.getElementById('resultsDashboard').classList.add('flex');
+            document.getElementById('resultsDashboard').scrollIntoView({behavior: 'smooth'});
+        }
+
         function deleteAcceptedWeek(weekId) {
+            if (editingWeekId === weekId) {
+                editingWeekId = null;
+                document.getElementById('resultsDashboard').classList.add('hidden');
+            }
             acceptedWeeks = acceptedWeeks.filter(w => w.id !== weekId);
+            
+            acceptedWeeks.forEach((w, index) => {
+                w.weekNumber = index + 1;
+            });
+
             syncMonthlyDataFromSchedules();
             renderHistory();
             if (acceptedWeeks.length === 0) {
@@ -742,32 +820,18 @@
         }
 
         function syncMonthlyDataFromSchedules() {
-            let activeMonths = new Set();
-            acceptedWeeks.forEach(week => {
-                const sDate = new Date(week.startDateObj);
-                week.schedule.forEach(item => {
-                    const dIdx = daysOfWeek.indexOf(item.shift.day);
-                    const shDate = new Date(sDate); shDate.setDate(shDate.getDate() + dIdx);
-                    activeMonths.add(shDate.getFullYear() + "-" + String(shDate.getMonth() + 1).padStart(2, '0'));
-                });
-            });
-
-            activeMonths.forEach(mKey => {
-                if (!monthlyManualData[mKey]) monthlyManualData[mKey] = {};
-                staff.forEach(p => { if(!monthlyManualData[mKey][p.id]) monthlyManualData[mKey][p.id] = {}; });
-            });
-
+            monthlyManualData = {}; 
             acceptedWeeks.forEach(week => {
                 const sDate = new Date(week.startDateObj);
                 week.schedule.forEach(item => {
                     const dIdx = daysOfWeek.indexOf(item.shift.day);
                     const shDate = new Date(sDate); shDate.setDate(shDate.getDate() + dIdx);
                     const mKey = shDate.getFullYear() + "-" + String(shDate.getMonth() + 1).padStart(2, '0');
-                    if(monthlyManualData[mKey] && monthlyManualData[mKey][item.personId]) {
-                        if (monthlyManualData[mKey][item.personId][shDate.getDate()] === undefined) {
-                            monthlyManualData[mKey][item.personId][shDate.getDate()] = item.shift.hours;
-                        }
-                    }
+                    
+                    if (!monthlyManualData[mKey]) monthlyManualData[mKey] = {};
+                    if (!monthlyManualData[mKey][item.personId]) monthlyManualData[mKey][item.personId] = {};
+                    
+                    monthlyManualData[mKey][item.personId][shDate.getDate()] = item.shift.hours;
                 });
             });
         }
@@ -929,13 +993,14 @@
             const container = document.getElementById('weeklyTablesContainer');
             container.innerHTML = '<h3 class="text-xl font-bold mb-4 border-b dark:border-slate-700 pb-2">Haftalık Çizelgeler</h3>';
             
-            acceptedWeeks.forEach((week, wIndex) => {
+            acceptedWeeks.forEach((week) => {
                 let html = `
                 <div class="mb-8 border dark:border-slate-700 rounded-lg overflow-hidden shadow-sm page-break-avoid">
                     <div class="bg-slate-100 dark:bg-slate-800 px-4 py-3 flex justify-between items-center border-b dark:border-slate-700">
-                        <h4 class="font-bold">${week.startDateStr} - ${week.endDateStr} <span class="text-xs bg-white dark:bg-slate-700 border px-2 py-0.5 rounded ml-2">Hafta ${wIndex + 1}</span></h4>
+                        <h4 class="font-bold">${week.startDateStr} - ${week.endDateStr} <span class="text-xs bg-white dark:bg-slate-700 border px-2 py-0.5 rounded ml-2">Hafta ${week.weekNumber}</span></h4>
                         <div class="flex gap-2">
                             <button onclick="shareWhatsApp(${week.id})" class="bg-green-100 hover:bg-green-200 dark:bg-green-900/50 dark:hover:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold px-3 py-1.5 rounded transition-colors flex items-center gap-1"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> WhatsApp</button>
+                            <button onclick="editAcceptedWeek(${week.id})" class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/50 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-bold px-3 py-1.5 rounded transition-colors">Düzenle</button>
                             <button onclick="deleteAcceptedWeek(${week.id})" class="bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900 text-red-700 dark:text-red-300 text-xs font-bold px-3 py-1.5 rounded transition-colors">Sil</button>
                         </div>
                     </div>
@@ -1027,6 +1092,7 @@
                         if(state.acceptedWeeks) {
                             state.acceptedWeeks.forEach(w => w.startDateObj = new Date(w.startDateObj));
                             acceptedWeeks = state.acceptedWeeks;
+                            acceptedWeeks.forEach((w, idx) => w.weekNumber = idx + 1);
                         }
                         initSettingsUI();
                         renderConstraintsTable();
@@ -1036,7 +1102,7 @@
                         alert("Veriler PDF'ten yüklendi!");
                     } else alert("Geçersiz PDF.");
                 } catch (err) { alert("Hata: " + err); }
-                event.target.value = '';
+                event.target.value = false;
             };
             reader.readAsArrayBuffer(file);
         }
@@ -1046,8 +1112,8 @@
             const wb = XLSX.utils.book_new();
             let ws_data = [["ONAYLANAN HAFTALIK ÇİZELGELER"], []];
             
-            acceptedWeeks.forEach((week, wI) => {
-                ws_data.push([`Hafta ${wI + 1}: ${week.startDateStr} - ${week.endDateStr}`]);
+            acceptedWeeks.forEach((week) => {
+                ws_data.push([`Hafta ${week.weekNumber}: ${week.startDateStr} - ${week.endDateStr}`]);
                 ws_data.push(["Personel", ...daysOfWeek, "Toplam"]);
                 
                 staff.forEach(p => {
