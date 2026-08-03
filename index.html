@@ -5,38 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flow Team Shift Planner</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind için Karanlık Mod Ayarı
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {} }
+        }
+    </script>
     <!-- html2pdf for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- SheetJS for Excel export -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <!-- PDF-Lib for reading and embedding PDF metadata -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <!-- Chart.js for Statistics & Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        input[type="checkbox"] { width: 1.25rem; height: 1.25rem; accent-color: #ef4444; cursor: pointer; }
-        .staff-suat { background-color: #dbeafe; color: #1e40af; }
-        .staff-eren { background-color: #dcfce7; color: #166534; }
-        .staff-onur { background-color: #f3e8ff; color: #6b21a8; }
-        .staff-yagmur { background-color: #ffedd5; color: #9a3412; }
+        input[type="checkbox"] { width: 1.25rem; height: 1.25rem; accent-color: #3b82f6; cursor: pointer; }
         .loader { border-top-color: #3b82f6; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .page-break-avoid { page-break-inside: avoid; }
+        .drag-over { border: 2px dashed #3b82f6 !important; opacity: 0.7; }
+        .draggable-shift { cursor: grab; transition: transform 0.1s; }
+        .draggable-shift:active { cursor: grabbing; transform: scale(0.95); }
+
+        @keyframes shiftSlide {
+            0% { transform: scale(0.92) translateY(-8px); opacity: 0.4; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-shift-drop {
+            animation: shiftSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-12">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans min-h-screen pb-12 transition-colors duration-300">
 
-    <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 py-5 flex flex-wrap items-center justify-between gap-4">
+    <!-- Navbar / Header -->
+    <header class="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-40 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h1 class="text-2xl font-bold text-slate-800">Flow Team Shift Planner</h1>
+                <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <h1 class="text-2xl font-bold">Flow Team Shift Planner</h1>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-sm font-medium bg-blue-100 text-blue-800 py-1 px-3 rounded-full hidden sm:block">4 Kişilik Ekip - 168 Saat</span>
-                <!-- PDF İçe Aktar Butonu Başlangıca (Header'a) Taşındı -->
-                <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 cursor-pointer transition-colors" title="Daha önce indirdiğiniz PDF'i buraya yükleyip kaldığınız yerden devam edebilirsiniz.">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" title="Karanlık Mod">
+                    <svg id="moon-icon" class="w-5 h-5 hidden dark:block text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+                    <svg id="sun-icon" class="w-5 h-5 block dark:hidden text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+                
+                <button onclick="document.getElementById('settingsModal').classList.remove('hidden')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Ayarlar
+                </button>
+
+                <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 cursor-pointer transition-colors" title="PDF Yükle">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    PDF İçe Aktar (Düzenle)
-                    <input type="file" id="pdfImportInput" accept="application/pdf" class="hidden" onchange="importFromPDF(event)">
+                    İçe Aktar
+                    <input type="file" accept="application/pdf" class="hidden" onchange="importFromPDF(event)">
                 </label>
             </div>
         </div>
@@ -46,44 +71,33 @@
         
         <!-- Left Column: Constraints & Date Selection -->
         <div class="xl:col-span-4 flex flex-col gap-6">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                <div class="bg-slate-100 px-5 py-4 border-b border-slate-200">
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col transition-colors">
+                <div class="bg-slate-100 dark:bg-slate-750 px-5 py-4 border-b border-slate-200 dark:border-slate-700">
                     <h2 class="text-lg font-semibold flex items-center gap-2">
                         <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                         Mazeret & İzin Yönetimi
                     </h2>
-                    <p class="text-xs text-slate-500 mt-1">Personelin ÇALIŞAMAYACAĞI vardiyaları işaretleyin.</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Personelin ÇALIŞAMAYACAĞI vardiyaları veya tam gün/hafta izinlerini işaretleyin.</p>
                 </div>
                 
-                <div class="overflow-y-auto max-h-[500px] p-0 border-b border-slate-200">
+                <div class="overflow-y-auto max-h-[500px] p-0 border-b border-slate-200 dark:border-slate-700 relative">
                     <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-slate-500 uppercase bg-slate-50 sticky top-0 shadow-sm z-10">
-                            <tr>
-                                <th class="px-4 py-3 font-semibold">Vardiya</th>
-                                <th class="px-1 py-3 font-semibold text-center text-blue-700">SUA</th>
-                                <th class="px-1 py-3 font-semibold text-center text-green-700">ERE</th>
-                                <th class="px-1 py-3 font-semibold text-center text-purple-700">ONU</th>
-                                <th class="px-1 py-3 font-semibold text-center text-orange-700">YAĞ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="constraintsTableBody" class="divide-y divide-slate-100">
-                            <!-- Filled by JS -->
-                        </tbody>
+                        <thead id="constraintsTableHead" class="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800 sticky top-0 shadow-sm z-10"></thead>
+                        <tbody id="constraintsTableBody" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
                     </table>
                 </div>
 
-                <!-- Tarih Seçimi (YYYY.AA.GG Manuel Giriş) -->
-                <div class="p-5 bg-white">
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Hafta Başlangıcı (Pazartesi):</label>
-                    <p class="text-[11px] text-slate-500 mb-2">YYYY.AA.GG formatında manuel giriniz (Örn: 2026.08.03).</p>
-                    <input type="text" id="weekStartDate" placeholder="YYYY.AA.GG" maxlength="10" class="w-full border border-slate-300 rounded-lg p-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" required>
-                    <p id="dateRangeDisplay" class="text-xs text-blue-700 font-bold mt-2 hidden"></p>
+                <div class="p-5 bg-white dark:bg-slate-800">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Hafta Başlangıcı (Pazartesi):</label>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">YYYY.AA.GG formatında manuel giriniz.</p>
+                    <input type="text" id="weekStartDate" placeholder="YYYY.AA.GG" maxlength="10" class="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" required>
+                    <p id="dateRangeDisplay" class="text-xs text-blue-600 dark:text-blue-400 font-bold mt-2 hidden"></p>
                 </div>
 
-                <div class="p-5 border-t border-slate-200 bg-slate-50">
+                <div class="p-5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                     <button onclick="startGeneration()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Çizelgeyi Oluştur
+                        Çizelgeyi Oluştur (Web Worker)
                     </button>
                 </div>
             </div>
@@ -92,80 +106,68 @@
         <!-- Right Column: Results & History -->
         <div class="xl:col-span-8 flex flex-col gap-6">
             
-            <div id="loadingIndicator" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center h-full min-h-[400px]">
-                <div class="loader border-4 border-slate-100 rounded-full w-12 h-12 mb-4"></div>
-                <p class="text-slate-500 font-medium text-center">Yapay zeka matrisi hesaplıyor (Hafta geçiş kuralları dahil)...</p>
+            <div id="loadingIndicator" class="hidden bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-12 flex flex-col items-center justify-center h-full min-h-[400px]">
+                <div class="loader border-4 border-slate-100 dark:border-slate-600 rounded-full w-12 h-12 mb-4"></div>
+                <p class="text-slate-500 dark:text-slate-400 font-medium text-center">Yapay zeka matrisi arka planda hesaplıyor (Denge ve Adalet kuralları devrede)...</p>
             </div>
 
-            <div id="errorMessage" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4">
+            <div id="errorMessage" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 flex items-start gap-4">
                 <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 <div>
-                    <h3 class="font-bold text-red-800">Planlama Başarısız!</h3>
-                    <p class="text-red-700 text-sm mt-1">Girdiğiniz mazeretler, hafta geçişi dinlenme kuralları (min 8 saat) veya haftalık min 36 saat çalışma kısıtlarıyla çakışıyor. Mazeretleri gözden geçirip tekrar deneyin.</p>
+                    <h3 class="font-bold text-red-800 dark:text-red-400">Planlama Başarısız!</h3>
+                    <p class="text-red-700 dark:text-red-300 text-sm mt-1">Girdiğiniz mazeretler, ayarlarınızdaki kurallarla çakışıyor. "Tam Gün İzinli" kutucuklarını veya çalışma saati ayarlarını gözden geçirin.</p>
                 </div>
             </div>
 
             <!-- Geçici Çizelge Önizlemesi -->
             <div id="resultsDashboard" class="hidden flex-col gap-6">
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex justify-between items-center">
+                <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex justify-between items-center">
                     <div>
-                        <h3 class="font-bold text-blue-800">Taslak Çizelge Oluşturuldu (Düzenlenebilir)</h3>
-                        <p class="text-blue-600 text-sm">Hücrelerdeki personel seçimlerini değiştirerek veya taslak silerek düzenleme yapabilirsiniz.</p>
+                        <h3 class="font-bold text-blue-800 dark:text-blue-300">Taslak Çizelge Oluşturuldu</h3>
+                        <p class="text-blue-600 dark:text-blue-400 text-sm">Vardiyaları sürükleyip birbirinin üzerine bırakarak personeller arası değişim yapabilirsiniz.</p>
                     </div>
-                    <button onclick="discardDraft()" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
+                    <button onclick="discardDraft()" class="bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900 text-red-700 dark:text-red-300 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">
                         Taslağı Sil
                     </button>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-4 text-center">
-                        <div class="text-blue-500 font-bold text-lg">Suat</div>
-                        <div id="hours-Suat" class="text-3xl font-black text-slate-700 mt-1">0<span class="text-sm text-slate-400 font-medium ml-1">sa</span></div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-green-100 p-4 text-center">
-                        <div class="text-green-500 font-bold text-lg">Eren</div>
-                        <div id="hours-Eren" class="text-3xl font-black text-slate-700 mt-1">0<span class="text-sm text-slate-400 font-medium ml-1">sa</span></div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-purple-100 p-4 text-center">
-                        <div class="text-purple-500 font-bold text-lg">Onur</div>
-                        <div id="hours-Onur" class="text-3xl font-black text-slate-700 mt-1">0<span class="text-sm text-slate-400 font-medium ml-1">sa</span></div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-orange-100 p-4 text-center">
-                        <div class="text-orange-500 font-bold text-lg">Yağmur</div>
-                        <div id="hours-Yağmur" class="text-3xl font-black text-slate-700 mt-1">0<span class="text-sm text-slate-400 font-medium ml-1">sa</span></div>
-                    </div>
+                <!-- Akıllı Sürükle-Bırak Kural İhlal Uyarı Alanı -->
+                <div id="dragWarningContainer" class="hidden bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-amber-800 dark:text-amber-300 text-sm flex items-center gap-3">
+                    <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div id="dragWarningText"><strong>Dikkat:</strong> Yapılan son vardiya değişimi bazı kural ihlallerine yol açtı.</div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-800 text-white px-5 py-4 flex justify-between items-center">
-                        <h2 class="font-semibold flex items-center gap-2">Haftalık Çalışma Matrisi (Önizleme)</h2>
+                <div id="draftHoursContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div class="bg-slate-800 dark:bg-slate-950 text-white px-5 py-4 flex justify-between items-center">
+                        <h2 class="font-semibold flex items-center gap-2">Haftalık Çalışma Matrisi (Önizleme & Sürükle-Bırak)</h2>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left min-w-[800px]">
-                            <thead class="text-xs text-slate-600 uppercase bg-slate-100 border-b border-slate-200">
+                            <thead class="text-xs text-slate-600 dark:text-slate-300 uppercase bg-slate-100 dark:bg-slate-700 border-b border-slate-200 dark:border-slate-600">
                                 <tr>
-                                    <th class="px-4 py-3 font-bold text-center border-r w-24">Personel</th>
-                                    <th class="px-2 py-3 font-semibold text-center border-r w-28">Pazartesi</th>
-                                    <th class="px-2 py-3 font-semibold text-center border-r w-28">Salı</th>
-                                    <th class="px-2 py-3 font-semibold text-center border-r w-28">Çarşamba</th>
-                                    <th class="px-2 py-3 font-semibold text-center border-r w-28">Perşembe</th>
-                                    <th class="px-2 py-3 font-semibold text-center border-r w-28">Cuma</th>
-                                    <th class="px-2 py-3 font-semibold text-center border-r w-28 bg-amber-50/50 text-amber-800">Cumartesi</th>
-                                    <th class="px-2 py-3 font-semibold text-center bg-amber-50/50 text-amber-800 w-28">Pazar</th>
+                                    <th class="px-4 py-3 font-bold text-center border-r dark:border-slate-600 w-24">Personel</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r dark:border-slate-600 w-28">Pazartesi</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r dark:border-slate-600 w-28">Salı</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r dark:border-slate-600 w-28">Çarşamba</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r dark:border-slate-600 w-28">Perşembe</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r dark:border-slate-600 w-28">Cuma</th>
+                                    <th class="px-2 py-3 font-semibold text-center border-r dark:border-slate-600 w-28 bg-amber-50/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-500">Cumartesi</th>
+                                    <th class="px-2 py-3 font-semibold text-center bg-amber-50/50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-500 w-28">Pazar</th>
                                 </tr>
                             </thead>
-                            <tbody id="matrixTableBody" class="divide-y divide-slate-200"></tbody>
+                            <tbody id="matrixTableBody" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Kabul/Ret Butonları -->
                 <div class="flex gap-4 mt-2">
                     <button onclick="acceptSchedule()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         Bu Çizelgeyi Kabul Et & Kaydet
                     </button>
-                    <button onclick="startGeneration()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex items-center justify-center gap-2">
+                    <button onclick="startGeneration()" class="flex-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                         Yeniden Oluştur
                     </button>
@@ -173,9 +175,9 @@
             </div>
 
             <!-- Geçmiş, Aylık Günlük Listeler & Raporlar Alanı -->
-            <div id="historySection" class="hidden flex-col gap-6 mt-8 border-t-2 border-slate-200 pt-8">
+            <div id="historySection" class="hidden flex-col gap-6 mt-8 border-t-2 border-slate-200 dark:border-slate-700 pt-8">
                 <div class="flex justify-between items-center flex-wrap gap-4">
-                    <h2 class="text-2xl font-bold text-slate-800">Onaylanan Çizelgeler & Aylık Çalışma Saatleri</h2>
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-white">Onaylanan Çizelgeler, Grafikler & Özet</h2>
                     <div class="flex gap-2 flex-wrap justify-end">
                         <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-colors">
                             Excel İndir
@@ -185,251 +187,382 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Grafik & İstatistik Bölümü -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 page-break-avoid">
+                    <div class="flex flex-col">
+                        <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-3 text-sm">Aylık Toplam Çalışma Saatleri (Hedef Kıyaslamalı)</h3>
+                        <div class="relative h-64 w-full">
+                            <canvas id="monthlyHoursChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="flex flex-col">
+                        <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-3 text-sm">Personel İş Yükü Dağılımı</h3>
+                        <div class="relative h-64 w-full">
+                            <canvas id="workloadDoughnutChart"></canvas>
+                        </div>
+                    </div>
+                </div>
                 
-                <div id="exportContainer" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-8">
-                    <!-- Aylık Hakediş / Borç Özetleri ve Manuel Günlük Tablolar -->
+                <div id="exportContainer" class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col gap-8 transition-colors">
                     <div id="monthlySummaryContainer"></div>
-                    
-                    <!-- Haftalık Tablolar -->
                     <div id="weeklyTablesContainer" class="flex flex-col gap-8"></div>
                 </div>
             </div>
-            
         </div>
     </main>
 
+    <!-- Ayarlar Modalı -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold dark:text-white">Sistem Ayarları & Personel Yönetimi</h2>
+                <button onclick="document.getElementById('settingsModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto flex flex-col gap-8">
+                <div>
+                    <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-3 border-b dark:border-slate-700 pb-2">Çalışma Kuralları (Parametreler)</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Haftalık Min (Saat)</label>
+                            <input type="number" id="set_minWeekly" class="w-full border rounded p-2 text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Haftalık Max (Saat)</label>
+                            <input type="number" id="set_maxWeekly" class="w-full border rounded p-2 text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Min Dinlenme (Saat)</label>
+                            <input type="number" id="set_minRest" class="w-full border rounded p-2 text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Aylık Hedef (Saat)</label>
+                            <input type="number" id="set_monthlyTarget" class="w-full border rounded p-2 text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-slate-700 dark:text-slate-300 mb-3 border-b dark:border-slate-700 pb-2 flex justify-between items-center">
+                        Personel Renkleri
+                    </h3>
+                    <div id="staffListContainer" class="flex flex-col gap-2"></div>
+                </div>
+            </div>
+            <div class="p-5 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
+                <button onclick="saveSettings()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold">Kaydet & Uygula</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const staff = ["Suat", "Eren", "Onur", "Yağmur"];
-        const daysOfWeek = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+        let defaultSettings = { minWeekly: 36, maxWeekly: 60, minRest: 12, monthlyTarget: 180 };
+        let settings = { ...defaultSettings };
         
+        let staff = [
+            { id: 'p1', name: "Suat", color: "#3b82f6" },
+            { id: 'p2', name: "Eren", color: "#22c55e" },
+            { id: 'p3', name: "Onur", color: "#a855f7" },
+            { id: 'p4', name: "Yağmur", color: "#f97316" }
+        ];
+
+        const daysOfWeek = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
         const shiftsData = [
             { id: 0, day: "Pazartesi", time: "07:00 - 15:00", hours: 8, isWeekend: false, startHour: 0, endHour: 8 },
             { id: 1, day: "Pazartesi", time: "15:00 - 23:00", hours: 8, isWeekend: false, startHour: 8, endHour: 16 },
-            { id: 2, day: "Pazartesi", time: "23:00 - 07:00", hours: 8, isWeekend: false, startHour: 16, endHour: 24 },
+            { id: 2, day: "Pazartesi", time: "23:00 - 07:00", hours: 8, isWeekend: false, startHour: 16, endHour: 24, isNight: true },
             { id: 3, day: "Salı", time: "07:00 - 15:00", hours: 8, isWeekend: false, startHour: 24, endHour: 32 },
             { id: 4, day: "Salı", time: "15:00 - 23:00", hours: 8, isWeekend: false, startHour: 32, endHour: 40 },
-            { id: 5, day: "Salı", time: "23:00 - 07:00", hours: 8, isWeekend: false, startHour: 40, endHour: 48 },
+            { id: 5, day: "Salı", time: "23:00 - 07:00", hours: 8, isWeekend: false, startHour: 40, endHour: 48, isNight: true },
             { id: 6, day: "Çarşamba", time: "07:00 - 15:00", hours: 8, isWeekend: false, startHour: 48, endHour: 56 },
             { id: 7, day: "Çarşamba", time: "15:00 - 23:00", hours: 8, isWeekend: false, startHour: 56, endHour: 64 },
-            { id: 8, day: "Çarşamba", time: "23:00 - 07:00", hours: 8, isWeekend: false, startHour: 64, endHour: 72 },
+            { id: 8, day: "Çarşamba", time: "23:00 - 07:00", hours: 8, isWeekend: false, startHour: 64, endHour: 72, isNight: true },
             { id: 9, day: "Perşembe", time: "07:00 - 15:00", hours: 8, isWeekend: false, startHour: 72, endHour: 80 },
             { id: 10, day: "Perşembe", time: "15:00 - 23:00", hours: 8, isWeekend: false, startHour: 80, endHour: 88 },
-            { id: 11, day: "Perşembe", time: "23:00 - 07:00", hours: 8, isWeekend: false, startHour: 88, endHour: 96 },
+            { id: 11, day: "Perşembe", time: "23:00 - 07:00", hours: 8, isWeekend: false, startHour: 88, endHour: 96, isNight: true },
             { id: 12, day: "Cuma", time: "07:00 - 19:00", hours: 12, isWeekend: true, startHour: 96, endHour: 108 },
-            { id: 13, day: "Cuma", time: "19:00 - 07:00", hours: 12, isWeekend: true, startHour: 108, endHour: 120 },
+            { id: 13, day: "Cuma", time: "19:00 - 07:00", hours: 12, isWeekend: true, startHour: 108, endHour: 120, isNight: true },
             { id: 14, day: "Cumartesi", time: "07:00 - 19:00", hours: 12, isWeekend: true, startHour: 120, endHour: 132 },
-            { id: 15, day: "Cumartesi", time: "19:00 - 07:00", hours: 12, isWeekend: true, startHour: 132, endHour: 144 },
+            { id: 15, day: "Cumartesi", time: "19:00 - 07:00", hours: 12, isWeekend: true, startHour: 132, endHour: 144, isNight: true },
             { id: 16, day: "Pazar", time: "07:00 - 19:00", hours: 12, isWeekend: true, startHour: 144, endHour: 156 },
-            { id: 17, day: "Pazar", time: "19:00 - 07:00", hours: 12, isWeekend: true, startHour: 156, endHour: 168 }
+            { id: 17, day: "Pazar", time: "19:00 - 07:00", hours: 12, isWeekend: true, startHour: 156, endHour: 168, isNight: true }
         ];
 
         let currentGeneratedSchedule = null;
         let acceptedWeeks = []; 
-        let monthlyManualData = {}; // { "2026-08": { staffName: { dayNum: hours } } }
+        let monthlyManualData = {};
+        let monthlyChartInstance = null;
+        let workloadChartInstance = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            initSettingsUI();
+            renderConstraintsTable();
+            setupDateInput();
+        });
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            updateChartsTheme();
+        }
+
+        function initSettingsUI() {
+            document.getElementById('set_minWeekly').value = settings.minWeekly;
+            document.getElementById('set_maxWeekly').value = settings.maxWeekly;
+            document.getElementById('set_minRest').value = settings.minRest;
+            document.getElementById('set_monthlyTarget').value = settings.monthlyTarget;
+            renderStaffListSettings();
+        }
+
+        function renderStaffListSettings() {
+            const container = document.getElementById('staffListContainer');
+            container.innerHTML = staff.map((p) => `
+                <div class="flex items-center p-2 border dark:border-slate-600 rounded bg-white dark:bg-slate-700">
+                    <div class="flex items-center gap-3">
+                        <input type="color" value="${p.color}" onchange="updateStaffColor('${p.id}', this.value)" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                        <span class="font-bold text-sm dark:text-white">${p.name}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStaffColor(id, newColor) {
+            const p = staff.find(x => x.id === id);
+            if(p) p.color = newColor;
+        }
+
+        function saveSettings() {
+            settings.minWeekly = parseFloat(document.getElementById('set_minWeekly').value) || 36;
+            settings.maxWeekly = parseFloat(document.getElementById('set_maxWeekly').value) || 60;
+            settings.minRest = parseFloat(document.getElementById('set_minRest').value) || 12;
+            settings.monthlyTarget = parseFloat(document.getElementById('set_monthlyTarget').value) || 180;
+            
+            document.getElementById('settingsModal').classList.add('hidden');
+            renderConstraintsTable();
+            if(currentGeneratedSchedule) discardDraft();
+            renderHistory();
+        }
+
+        function hexToRgba(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function renderConstraintsTable() {
+            const thead = document.getElementById('constraintsTableHead');
             const tbody = document.getElementById('constraintsTableBody');
+            
+            let headHTML = `<tr><th class="px-4 py-3 font-semibold">Vardiya</th>`;
+            staff.forEach(p => {
+                headHTML += `<th class="px-1 py-3 font-semibold text-center" style="color: ${p.color}">${p.name.substring(0,3).toUpperCase()}</th>`;
+            });
+            headHTML += `</tr>`;
+            thead.innerHTML = headHTML;
+
+            let tbodyHTML = `<tr class="bg-slate-200 dark:bg-slate-700 border-b-2 border-slate-300 dark:border-slate-600">
+                <td class="px-4 py-3 font-bold text-xs">🗓️ <span class="text-blue-800 dark:text-blue-300">TAM HAFTA İZİNLİ</span></td>`;
+            staff.forEach(p => {
+                tbodyHTML += `<td class="px-1 py-3 text-center"><input type="checkbox" id="leave_${p.id}" title="${p.name} bu hafta tam izinli" onchange="toggleFullLeave('${p.id}', this.checked)"></td>`;
+            });
+            tbodyHTML += `</tr>`;
+
             shiftsData.forEach((shift, index) => {
                 const isNewDay = index === 0 || shiftsData[index - 1].day !== shift.day;
-                const borderClass = isNewDay && index !== 0 ? 'border-t-2 border-slate-300' : 'border-t border-slate-100';
-                const bgClass = shift.isWeekend ? 'bg-amber-50/40' : 'bg-white';
+                const borderClass = isNewDay && index !== 0 ? 'border-t-2 border-slate-300 dark:border-slate-600' : 'border-t border-slate-100 dark:border-slate-700';
+                const bgClass = shift.isWeekend ? 'bg-amber-50/40 dark:bg-amber-900/10' : 'bg-white dark:bg-slate-800';
                 
-                const tr = document.createElement('tr');
-                tr.className = `hover:bg-slate-50 transition-colors ${borderClass} ${bgClass}`;
-                tr.innerHTML = `
+                tbodyHTML += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors ${borderClass} ${bgClass}">
                     <td class="px-4 py-2">
-                        <div class="font-bold text-slate-800 text-xs">${shift.day}</div>
-                        <div class="text-[11px] text-slate-500">${shift.time} <span class="bg-slate-200 text-slate-600 px-1 rounded ml-1">${shift.hours}s</span></div>
-                    </td>
-                    <td class="px-1 py-2 text-center"><input type="checkbox" id="chk_${shift.id}_Suat" value="Suat"></td>
-                    <td class="px-1 py-2 text-center"><input type="checkbox" id="chk_${shift.id}_Eren" value="Eren"></td>
-                    <td class="px-1 py-2 text-center"><input type="checkbox" id="chk_${shift.id}_Onur" value="Onur"></td>
-                    <td class="px-1 py-2 text-center"><input type="checkbox" id="chk_${shift.id}_Yağmur" value="Yağmur"></td>
-                `;
-                tbody.appendChild(tr);
+                        <div class="font-bold text-slate-800 dark:text-slate-200 text-xs">${shift.day}</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400">${shift.time} <span class="bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 px-1 rounded ml-1">${shift.hours}s</span></div>
+                    </td>`;
+                staff.forEach(p => {
+                    tbodyHTML += `<td class="px-1 py-2 text-center"><input type="checkbox" class="chk_shift_${shift.id}" id="chk_${shift.id}_${p.id}" value="${p.id}"></td>`;
+                });
+                tbodyHTML += `</tr>`;
             });
+            tbody.innerHTML = tbodyHTML;
+        }
 
-            // Tarih Girişi Dinleyicisi (YYYY.AA.GG formatı)
+        function toggleFullLeave(pId, isChecked) {
+            shiftsData.forEach(shift => {
+                const chk = document.getElementById(`chk_${shift.id}_${pId}`);
+                if (chk) {
+                    chk.checked = isChecked;
+                    chk.disabled = isChecked;
+                }
+            });
+        }
+
+        function setupDateInput() {
             const dateInput = document.getElementById('weekStartDate');
             const dateRangeDisplay = document.getElementById('dateRangeDisplay');
 
             dateInput.addEventListener('change', (e) => {
                 let val = e.target.value.trim();
                 const parts = val.split('.');
-                if(parts.length !== 3) {
-                    dateRangeDisplay.classList.add('hidden');
-                    return;
-                }
-                const year = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1;
-                const day = parseInt(parts[2], 10);
+                if(parts.length !== 3) { dateRangeDisplay.classList.add('hidden'); return; }
+                const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
+                if(isNaN(y) || isNaN(m) || isNaN(d)) { dateRangeDisplay.classList.add('hidden'); return; }
                 
-                if(isNaN(year) || isNaN(month) || isNaN(day)) {
-                    dateRangeDisplay.classList.add('hidden');
-                    return;
-                }
-
-                const date = new Date(year, month, day);
-                if(isNaN(date.getTime())) {
-                    dateRangeDisplay.classList.add('hidden');
-                    return;
-                }
+                const date = new Date(y, m, d);
+                if(isNaN(date.getTime())) { dateRangeDisplay.classList.add('hidden'); return; }
                 
                 let dayOfWeek = date.getDay();
                 let diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
                 date.setDate(diff);
                 
-                const yyyy = date.getFullYear();
-                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                const dd = String(date.getDate()).padStart(2, '0');
-                e.target.value = `${yyyy}.${mm}.${dd}`;
+                e.target.value = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
                 
                 const endDate = new Date(date);
                 endDate.setDate(date.getDate() + 6);
-                
                 dateRangeDisplay.textContent = `Seçili Aralık: ${date.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
                 dateRangeDisplay.classList.remove('hidden');
             });
-        });
+        }
 
         function startGeneration() {
             const dateInput = document.getElementById('weekStartDate');
-            if(!dateInput.value) {
-                alert("Lütfen önce bir hafta başlangıç tarihi (Pazartesi) girin!");
-                dateInput.focus();
-                return;
-            }
+            if(!dateInput.value) { alert("Lütfen önce bir hafta başlangıç tarihi (Pazartesi) girin!"); dateInput.focus(); return; }
 
             document.getElementById('resultsDashboard').classList.add('hidden');
             document.getElementById('errorMessage').classList.add('hidden');
             document.getElementById('loadingIndicator').classList.remove('hidden');
 
-            setTimeout(() => { generateSchedule(); }, 100);
-        }
-
-        function generateSchedule() {
-            const dateInput = document.getElementById('weekStartDate');
             const parts = dateInput.value.split('.');
-            const newWeekStart = new Date(parts[0], parts[1] - 1, parts[2], 7, 0, 0);
+            const weekStartMs = new Date(parts[0], parts[1] - 1, parts[2], 7, 0, 0).getTime();
 
             let lastPersonShiftEnds = {};
             if (acceptedWeeks.length > 0) {
                 const lastWeek = acceptedWeeks[acceptedWeeks.length - 1];
-                const lastWeekStart = new Date(lastWeek.startDateObj);
-                
+                const lastWeekStartMs = new Date(lastWeek.startDateObj).getTime();
                 staff.forEach(p => {
-                    let pShifts = lastWeek.schedule.filter(item => item.person === p);
+                    let pShifts = lastWeek.schedule.filter(item => item.personId === p.id);
                     if (pShifts.length > 0) {
                         pShifts.sort((a, b) => b.shift.id - a.shift.id);
-                        const lastShift = pShifts[0].shift;
-                        const endTimeMs = lastWeekStart.getTime() + lastShift.endHour * 3600 * 1000;
-                        lastPersonShiftEnds[p] = endTimeMs;
+                        lastPersonShiftEnds[p.id] = lastWeekStartMs + (pShifts[0].shift.endHour * 3600 * 1000);
                     }
                 });
             }
 
-            const unavailabilities = {}; 
+            const unavailabilities = {};
             shiftsData.forEach(shift => {
                 unavailabilities[shift.id] = [];
-                staff.forEach(person => {
-                    const checkbox = document.getElementById(`chk_${shift.id}_${person}`);
-                    if(checkbox && checkbox.checked) { unavailabilities[shift.id].push(person); }
+                staff.forEach(p => {
+                    const chk = document.getElementById(`chk_${shift.id}_${p.id}`);
+                    if(chk && chk.checked) unavailabilities[shift.id].push(p.id);
                 });
             });
 
-            let bestSchedule = null;
-            let iterations = 0;
-            const MAX_ITERATIONS = 400000; 
-            
-            function shuffle(array) {
-                let currentIndex = array.length, randomIndex;
-                while (currentIndex != 0) {
-                    randomIndex = Math.floor(Math.random() * currentIndex);
-                    currentIndex--;
-                    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            const exemptStaff = [];
+            staff.forEach(p => {
+                if(document.getElementById(`leave_${p.id}`) && document.getElementById(`leave_${p.id}`).checked) {
+                    exemptStaff.push(p.id);
                 }
-                return array;
-            }
+            });
 
-            function solve(shiftIndex, currentHours, currentSchedule) {
-                iterations++;
-                if (iterations > MAX_ITERATIONS) return false;
+            const workerCode = `
+                self.onmessage = function(e) {
+                    const { shiftsData, unavailabilities, lastPersonShiftEnds, staffIds, settings, weekStartMs, exemptStaff } = e.data;
+                    
+                    let bestSchedule = null;
+                    let iterations = 0;
+                    const MAX_ITER = 300000;
+                    
+                    function solve(shiftIndex, currentHours, currentSchedule, metrics) {
+                        iterations++;
+                        if(iterations > MAX_ITER) return false;
 
-                if (shiftIndex === shiftsData.length) {
-                    for (let p of staff) {
-                        if (currentHours[p] < 36) return false;
-                    }
-                    bestSchedule = [...currentSchedule];
-                    return true;
-                }
-
-                const shift = shiftsData[shiftIndex];
-
-                let remainingHoursInWeek = 0;
-                for (let i = shiftIndex; i < shiftsData.length; i++) remainingHoursInWeek += shiftsData[i].hours;
-                
-                let totalDeficit = 0;
-                for (let p of staff) {
-                    if (currentHours[p] < 36) totalDeficit += (36 - currentHours[p]);
-                }
-                if (remainingHoursInWeek < totalDeficit) return false; 
-
-                let availableStaff = [...staff];
-                shuffle(availableStaff); 
-                availableStaff.sort((a, b) => currentHours[a] - currentHours[b]);
-
-                for (let person of availableStaff) {
-                    if (unavailabilities[shift.id].includes(person)) continue;
-                    if (currentHours[person] + shift.hours > 60) continue; 
-
-                    let personHasPriorShiftInWeek = currentSchedule.some(item => item.person === person);
-                    if (!personHasPriorShiftInWeek && lastPersonShiftEnds[person]) {
-                        let shiftStartMs = newWeekStart.getTime() + shift.startHour * 3600 * 1000;
-                        let breakHours = (shiftStartMs - lastPersonShiftEnds[person]) / (3600 * 1000);
-                        if (breakHours <= 8) continue;
-                    }
-
-                    let lastShiftIndex = -1;
-                    for (let i = currentSchedule.length - 1; i >= 0; i--) {
-                        if (currentSchedule[i].person === person) {
-                            lastShiftIndex = currentSchedule[i].shift.id;
-                            break;
+                        if (shiftIndex === shiftsData.length) {
+                            for (let pId of staffIds) {
+                                if (!exemptStaff.includes(pId) && currentHours[pId] < settings.minWeekly) return false;
+                            }
+                            bestSchedule = JSON.parse(JSON.stringify(currentSchedule));
+                            return true;
                         }
-                    }
 
-                    if (lastShiftIndex !== -1) {
-                        let breakHours = 0;
-                        for (let k = lastShiftIndex + 1; k < shiftIndex; k++) {
-                            breakHours += shiftsData[k].hours;
+                        const shift = shiftsData[shiftIndex];
+                        let avail = [...staffIds].filter(pId => !unavailabilities[shift.id].includes(pId));
+                        
+                        // Her adımda uygun personelleri rastgele karıştırarak her yenilemede farklı olası tablolar üretilmesini sağlıyoruz
+                        for (let i = avail.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [avail[i], avail[j]] = [avail[j], avail[i]];
                         }
-                        if (breakHours <= 8) continue;
+
+                        for (let pId of avail) {
+                            if (currentHours[pId] + shift.hours > settings.maxWeekly) continue;
+
+                            let hasPrior = currentSchedule.some(item => item.personId === pId);
+                            if (!hasPrior && lastPersonShiftEnds[pId]) {
+                                let shiftStartMs = weekStartMs + shift.startHour * 3600 * 1000;
+                                let breakH = (shiftStartMs - lastPersonShiftEnds[pId]) / (3600 * 1000);
+                                if (breakH < settings.minRest) continue;
+                            }
+
+                            let lastShiftIdx = -1;
+                            for (let i = currentSchedule.length - 1; i >= 0; i--) {
+                                if (currentSchedule[i].personId === pId) { lastShiftIdx = currentSchedule[i].shift.id; break; }
+                            }
+
+                            if (lastShiftIdx !== -1) {
+                                let breakH = 0;
+                                for (let k = lastShiftIdx + 1; k < shiftIndex; k++) breakH += shiftsData[k].hours;
+                                if (breakH < settings.minRest) continue;
+                            }
+
+                            currentSchedule.push({ shift, personId: pId });
+                            currentHours[pId] += shift.hours;
+                            if(shift.isWeekend) metrics[pId].weekend++;
+                            if(shift.isNight) metrics[pId].night++;
+
+                            if (solve(shiftIndex + 1, currentHours, currentSchedule, metrics)) return true;
+
+                            if(shift.isWeekend) metrics[pId].weekend--;
+                            if(shift.isNight) metrics[pId].night--;
+                            currentHours[pId] -= shift.hours;
+                            currentSchedule.pop();
+                        }
+                        return false;
                     }
 
-                    currentSchedule.push({ shift: shift, person: person });
-                    currentHours[person] += shift.hours;
+                    let initialH = {}; let initialM = {};
+                    staffIds.forEach(id => { initialH[id] = 0; initialM[id] = {weekend:0, night:0}; });
+                    
+                    const success = solve(0, initialH, [], initialM);
+                    self.postMessage({ success, bestSchedule });
+                };
+            `;
 
-                    if (solve(shiftIndex + 1, currentHours, currentSchedule)) return true; 
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const worker = new Worker(URL.createObjectURL(blob));
 
-                    currentHours[person] -= shift.hours;
-                    currentSchedule.pop();
-                }
-                return false; 
-            }
-
-            let initialHours = { "Suat": 0, "Eren": 0, "Onur": 0, "Yağmur": 0 };
-            const success = solve(0, initialHours, []);
-
-            document.getElementById('loadingIndicator').classList.add('hidden');
-
-            if (success && bestSchedule) {
-                currentGeneratedSchedule = bestSchedule;
+            worker.onmessage = function(e) {
+                const { success, bestSchedule } = e.data;
+                document.getElementById('loadingIndicator').classList.add('hidden');
                 
-                renderDraftMatrix(bestSchedule);
-                document.getElementById('resultsDashboard').classList.remove('hidden');
-                document.getElementById('resultsDashboard').classList.add('flex');
-            } else {
-                document.getElementById('errorMessage').classList.remove('hidden');
-            }
+                if (success && bestSchedule) {
+                    currentGeneratedSchedule = bestSchedule;
+                    renderDraftMatrix(bestSchedule);
+                    document.getElementById('resultsDashboard').classList.remove('hidden');
+                    document.getElementById('resultsDashboard').classList.add('flex');
+                    document.getElementById('resultsDashboard').scrollIntoView({behavior: 'smooth'});
+                } else {
+                    document.getElementById('errorMessage').classList.remove('hidden');
+                }
+                worker.terminate();
+            };
+
+            worker.postMessage({
+                shiftsData,
+                unavailabilities,
+                lastPersonShiftEnds,
+                staffIds: staff.map(s => s.id),
+                settings,
+                weekStartMs,
+                exemptStaff
+            });
         }
 
         function discardDraft() {
@@ -437,57 +570,119 @@
             document.getElementById('resultsDashboard').classList.add('hidden');
         }
 
-        function renderDraftMatrix(schedule) {
-            const hours = { Suat: 0, Eren: 0, Onur: 0, Yağmur: 0 };
-            schedule.forEach(item => { hours[item.person] += item.shift.hours; });
+        // --- AKILLI SÜRÜKLE-BIRAK & KURAL KONTROLÜ ---
+        let dragSourceId = null;
 
-            staff.forEach(person => {
-                const el = document.getElementById(`hours-${person}`);
-                if(el) el.innerHTML = `${hours[person]}<span class="text-sm text-slate-400 font-medium ml-1">sa</span>`;
+        function handleDragStart(e, shiftId) {
+            dragSourceId = shiftId;
+            e.dataTransfer.effectAllowed = 'move';
+            e.target.classList.add('opacity-50');
+        }
+        function handleDragEnd(e) { e.target.classList.remove('opacity-50'); }
+        function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+        function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+        
+        function handleDrop(e, targetShiftId) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            if (dragSourceId === null || dragSourceId === targetShiftId) return;
+
+            const sourceItem = currentGeneratedSchedule.find(i => i.shift.id === dragSourceId);
+            const targetItem = currentGeneratedSchedule.find(i => i.shift.id === targetShiftId);
+            
+            if(sourceItem && targetItem) {
+                const temp = sourceItem.personId;
+                sourceItem.personId = targetItem.personId;
+                targetItem.personId = temp;
+                
+                renderDraftMatrix(currentGeneratedSchedule);
+                validateDraftConstraints(currentGeneratedSchedule);
+            }
+            dragSourceId = null;
+        }
+
+        function validateDraftConstraints(schedule) {
+            let warnings = [];
+            staff.forEach(p => {
+                let pShifts = schedule.filter(i => i.personId === p.id).sort((a,b) => a.shift.startHour - b.shift.startHour);
+                let totalHours = pShifts.reduce((sum, i) => sum + i.shift.hours, 0);
+
+                if (totalHours > settings.maxWeekly) {
+                    warnings.push(`${p.name} haftalık maksimum çalışma saatini aştı (${totalHours}s / Max: ${settings.maxWeekly}s).`);
+                }
+
+                // Min dinlenme kontrolü
+                for (let i = 0; i < pShifts.length - 1; i++) {
+                    let rest = pShifts[i+1].shift.startHour - pShifts[i].shift.endHour;
+                    if (rest < settings.minRest) {
+                        warnings.push(`${p.name} ardışık vardiyalar arasında yetersiz dinlenme (${rest}s < ${settings.minRest}s).`);
+                    }
+                }
             });
+
+            const warningBox = document.getElementById('dragWarningContainer');
+            const warningText = document.getElementById('dragWarningText');
+            if (warnings.length > 0) {
+                warningText.innerHTML = `<strong>Kural İhlali Tespit Edildi:</strong><br>` + warnings.join('<br>');
+                warningBox.classList.remove('hidden');
+            } else {
+                warningBox.classList.add('hidden');
+            }
+        }
+
+        function renderDraftMatrix(schedule) {
+            const hours = {}; staff.forEach(p => hours[p.id] = 0);
+            schedule.forEach(item => { hours[item.personId] += item.shift.hours; });
+
+            const hoursContainer = document.getElementById('draftHoursContainer');
+            hoursContainer.innerHTML = staff.map(p => `
+                <div class="bg-white dark:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-600 p-4 text-center">
+                    <div class="font-bold text-lg" style="color:${p.color}">${p.name}</div>
+                    <div class="text-3xl font-black text-slate-700 dark:text-slate-200 mt-1">${hours[p.id]}<span class="text-sm font-medium ml-1">sa</span></div>
+                </div>
+            `).join('');
 
             const matrixData = {};
-            staff.forEach(person => {
-                matrixData[person] = {};
-                daysOfWeek.forEach(day => matrixData[person][day] = []);
+            staff.forEach(p => {
+                matrixData[p.id] = {};
+                daysOfWeek.forEach(d => matrixData[p.id][d] = []);
             });
-
-            schedule.forEach(item => {
-                matrixData[item.person][item.shift.day].push(item.shift);
-            });
+            schedule.forEach(item => matrixData[item.personId][item.shift.day].push(item));
 
             const tbody = document.getElementById('matrixTableBody');
             tbody.innerHTML = ''; 
 
             staff.forEach(person => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors";
                 
-                let personClass = person === 'Suat' ? 'staff-suat' : person === 'Eren' ? 'staff-eren' : person === 'Onur' ? 'staff-onur' : 'staff-yagmur';
-                let rowHTML = `<td class="px-2 py-4 font-bold text-center border-r border-slate-200 ${personClass}">${person}</td>`;
+                let rowHTML = `<td class="px-2 py-4 font-bold text-center border-r border-slate-200 dark:border-slate-700" style="background-color: ${hexToRgba(person.color, 0.1)}; color:${person.color}">${person.name}</td>`;
 
                 daysOfWeek.forEach(day => {
-                    const shifts = matrixData[person][day];
+                    const items = matrixData[person.id][day];
                     const isWeekend = (day === 'Cumartesi' || day === 'Pazar');
-                    const bgColClass = isWeekend ? 'bg-amber-50/20' : '';
+                    const bgColClass = isWeekend ? 'bg-amber-50/20 dark:bg-amber-900/10' : '';
                     
-                    let cellHTML = `<td class="px-2 py-3 align-middle text-center border-r border-slate-200 ${bgColClass}">`;
-                    if (shifts.length > 0) {
+                    let cellHTML = `<td class="px-2 py-3 align-middle text-center border-r border-slate-200 dark:border-slate-700 ${bgColClass}">`;
+                    if (items.length > 0) {
                         cellHTML += `<div class="flex flex-col gap-1.5 items-center justify-center h-full">`;
-                        shifts.forEach(shift => {
-                            const badgeColor = shift.hours === 12 ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 border border-slate-300 text-slate-700 shadow-sm';
-                            // Taslak hücrelerinde düzenleme (Personel değiştirme dropdown)
+                        items.forEach(item => {
+                            const badgeBg = hexToRgba(person.color, 0.9);
                             cellHTML += `
-                                <div class="flex items-center gap-1 w-full ${badgeColor} px-2 py-1 rounded">
-                                    <span class="text-[10px] font-medium truncate">${shift.time}</span>
-                                    <select onchange="reassignDraftShift(${shift.id}, this.value)" class="ml-auto text-[10px] bg-white text-slate-800 rounded px-1 py-0.5 border border-slate-300 focus:outline-none">
-                                        ${staff.map(p => `<option value="${p}" ${p === person ? 'selected' : ''}>${p}</option>`).join('')}
-                                    </select>
+                                <div draggable="true" 
+                                     ondragstart="handleDragStart(event, ${item.shift.id})" 
+                                     ondragend="handleDragEnd(event)"
+                                     ondragover="handleDragOver(event)" 
+                                     ondragleave="handleDragLeave(event)" 
+                                     ondrop="handleDrop(event, ${item.shift.id})"
+                                     class="draggable-shift animate-shift-drop flex flex-col items-center justify-center w-full px-2 py-1 rounded shadow-sm text-white" style="background-color:${badgeBg}; min-height:40px;">
+                                    <span class="text-[11px] font-bold">${item.shift.time}</span>
+                                    <span class="text-[9px] opacity-80">${person.name}</span>
                                 </div>`;
                         });
                         cellHTML += `</div>`;
                     } else {
-                        cellHTML += `<div class="h-full flex items-center justify-center"><span class="text-slate-300 font-medium text-xs italic">- İzin -</span></div>`;
+                        cellHTML += `<div class="h-full flex items-center justify-center"><span class="text-slate-300 dark:text-slate-500 font-medium text-xs italic">-</span></div>`;
                     }
                     cellHTML += `</td>`;
                     rowHTML += cellHTML;
@@ -497,43 +692,26 @@
             });
         }
 
-        function reassignDraftShift(shiftId, newPerson) {
-            if (!currentGeneratedSchedule) return;
-            const item = currentGeneratedSchedule.find(i => i.shift.id === shiftId);
-            if (item) {
-                item.person = newPerson;
-                renderDraftMatrix(currentGeneratedSchedule);
-            }
-        }
-
         function acceptSchedule() {
             const dateInput = document.getElementById('weekStartDate');
-            if(!dateInput.value) {
-                alert("Lütfen önce bir hafta başlangıç tarihi (Pazartesi) girin!");
-                return;
-            }
             if(!currentGeneratedSchedule) return;
 
             const parts = dateInput.value.split('.');
-            const startDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            const startDate = new Date(parts[0], parts[1] - 1, parts[2], 7, 0, 0);
             const endDate = new Date(startDate);
             endDate.setDate(startDate.getDate() + 6);
 
-            const weeklyHours = { Suat: 0, Eren: 0, Onur: 0, Yağmur: 0 };
-            currentGeneratedSchedule.forEach(item => {
-                weeklyHours[item.person] += item.shift.hours;
-            });
+            const weeklyHours = {}; staff.forEach(p => weeklyHours[p.id] = 0);
+            currentGeneratedSchedule.forEach(item => weeklyHours[item.personId] += item.shift.hours);
 
-            const weekData = {
+            acceptedWeeks.push({
                 id: Date.now(),
                 startDateObj: startDate,
                 startDateStr: startDate.toLocaleDateString('tr-TR'),
                 endDateStr: endDate.toLocaleDateString('tr-TR'),
                 schedule: JSON.parse(JSON.stringify(currentGeneratedSchedule)),
                 weeklyHours: weeklyHours
-            };
-
-            acceptedWeeks.push(weekData);
+            });
             acceptedWeeks.sort((a, b) => a.startDateObj - b.startDateObj);
 
             syncMonthlyDataFromSchedules();
@@ -541,24 +719,16 @@
 
             document.getElementById('resultsDashboard').classList.add('hidden');
             currentGeneratedSchedule = null;
+            document.getElementById('dragWarningContainer').classList.add('hidden');
             
             const nextWeek = new Date(startDate);
             nextWeek.setDate(nextWeek.getDate() + 7);
+            dateInput.value = `${nextWeek.getFullYear()}.${String(nextWeek.getMonth() + 1).padStart(2, '0')}.${String(nextWeek.getDate()).padStart(2, '0')}`;
             
-            const yyyy = nextWeek.getFullYear();
-            const mm = String(nextWeek.getMonth() + 1).padStart(2, '0');
-            const dd = String(nextWeek.getDate()).padStart(2, '0');
-            dateInput.value = `${yyyy}.${mm}.${dd}`;
-            
-            const nextWeekEnd = new Date(nextWeek);
-            nextWeekEnd.setDate(nextWeek.getDate() + 6);
-            document.getElementById('dateRangeDisplay').textContent = `Seçili Aralık: ${nextWeek.toLocaleDateString('tr-TR')} - ${nextWeekEnd.toLocaleDateString('tr-TR')}`;
-            
-            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+            document.querySelectorAll('input[type="checkbox"]').forEach(c => { c.checked = false; c.disabled=false; });
 
             const histSec = document.getElementById('historySection');
-            histSec.classList.remove('hidden');
-            histSec.classList.add('flex');
+            histSec.classList.remove('hidden'); histSec.classList.add('flex');
             histSec.scrollIntoView({behavior: 'smooth'});
         }
 
@@ -568,411 +738,331 @@
             renderHistory();
             if (acceptedWeeks.length === 0) {
                 document.getElementById('historySection').classList.add('hidden');
-                document.getElementById('historySection').classList.remove('flex');
             }
-        }
-
-        function editAcceptedWeek(weekId) {
-            const weekIndex = acceptedWeeks.findIndex(w => w.id === weekId);
-            if (weekIndex === -1) return;
-            
-            const week = acceptedWeeks[weekIndex];
-            
-            // 1. O haftanın taslağını ana düzenleme ekranına geri yükle
-            currentGeneratedSchedule = JSON.parse(JSON.stringify(week.schedule));
-            
-            // 2. Tarih kutusunu ilgili haftanın başlangıcına geri ayarla
-            const yyyy = week.startDateObj.getFullYear();
-            const mm = String(week.startDateObj.getMonth() + 1).padStart(2, '0');
-            const dd = String(week.startDateObj.getDate()).padStart(2, '0');
-            document.getElementById('weekStartDate').value = `${yyyy}.${mm}.${dd}`;
-            
-            const endDate = new Date(week.startDateObj);
-            endDate.setDate(endDate.getDate() + 6);
-            const dateDisplay = document.getElementById('dateRangeDisplay');
-            dateDisplay.textContent = `Seçili Aralık: ${week.startDateObj.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`;
-            dateDisplay.classList.remove('hidden');
-
-            // 3. Haftayı onaylananlardan çıkart (çünkü artık taslakta)
-            acceptedWeeks.splice(weekIndex, 1);
-            
-            syncMonthlyDataFromSchedules();
-            renderHistory();
-            if (acceptedWeeks.length === 0) {
-                document.getElementById('historySection').classList.add('hidden');
-                document.getElementById('historySection').classList.remove('flex');
-            }
-
-            // 4. Taslak ekranını göster
-            renderDraftMatrix(currentGeneratedSchedule);
-            document.getElementById('resultsDashboard').classList.remove('hidden');
-            document.getElementById('resultsDashboard').classList.add('flex');
-            
-            // 5. Yukarı (Taslak ekranına) kaydır
-            document.getElementById('resultsDashboard').scrollIntoView({behavior: 'smooth'});
         }
 
         function syncMonthlyDataFromSchedules() {
-            // Tüm ayları tespit et ve aylık manuel veri yapısını oluştur/güncelle
             let activeMonths = new Set();
             acceptedWeeks.forEach(week => {
                 const sDate = new Date(week.startDateObj);
                 week.schedule.forEach(item => {
-                    const shiftDayIndex = daysOfWeek.indexOf(item.shift.day);
-                    const shiftDate = new Date(sDate);
-                    shiftDate.setDate(shiftDate.getDate() + shiftDayIndex);
-                    const monthKey = shiftDate.getFullYear() + "-" + String(shiftDate.getMonth() + 1).padStart(2, '0');
-                    activeMonths.add(monthKey);
+                    const dIdx = daysOfWeek.indexOf(item.shift.day);
+                    const shDate = new Date(sDate); shDate.setDate(shDate.getDate() + dIdx);
+                    activeMonths.add(shDate.getFullYear() + "-" + String(shDate.getMonth() + 1).padStart(2, '0'));
                 });
             });
 
-            // Eğer yeni bir ay eklendiyse veya eksikse initialize et
-            activeMonths.forEach(monthKey => {
-                if (!monthlyManualData[monthKey]) {
-                    monthlyManualData[monthKey] = {};
-                    staff.forEach(p => {
-                        monthlyManualData[monthKey][p] = {};
-                    });
-                }
+            activeMonths.forEach(mKey => {
+                if (!monthlyManualData[mKey]) monthlyManualData[mKey] = {};
+                staff.forEach(p => { if(!monthlyManualData[mKey][p.id]) monthlyManualData[mKey][p.id] = {}; });
             });
 
-            // Çizelgelerdeki vardiya saatlerini ilgili günlere otomatik doldur (eğer kullanıcı elle ezmediyse veya ilk kez geliyorsa)
             acceptedWeeks.forEach(week => {
                 const sDate = new Date(week.startDateObj);
                 week.schedule.forEach(item => {
-                    const shiftDayIndex = daysOfWeek.indexOf(item.shift.day);
-                    const shiftDate = new Date(sDate);
-                    shiftDate.setDate(shiftDate.getDate() + shiftDayIndex);
-                    const monthKey = shiftDate.getFullYear() + "-" + String(shiftDate.getMonth() + 1).padStart(2, '0');
-                    const dayNum = shiftDate.getDate();
-
-                    // Eğer o gün için henüz değer girilmemişse çizelgeden doldur
-                    if (monthlyManualData[monthKey][item.person][dayNum] === undefined) {
-                        monthlyManualData[monthKey][item.person][dayNum] = item.shift.hours;
+                    const dIdx = daysOfWeek.indexOf(item.shift.day);
+                    const shDate = new Date(sDate); shDate.setDate(shDate.getDate() + dIdx);
+                    const mKey = shDate.getFullYear() + "-" + String(shDate.getMonth() + 1).padStart(2, '0');
+                    if(monthlyManualData[mKey] && monthlyManualData[mKey][item.personId]) {
+                        if (monthlyManualData[mKey][item.personId][shDate.getDate()] === undefined) {
+                            monthlyManualData[mKey][item.personId][shDate.getDate()] = item.shift.hours;
+                        }
                     }
                 });
             });
         }
 
-        function updateManualHour(monthKey, person, dayNum, val) {
-            if (!monthlyManualData[monthKey]) monthlyManualData[monthKey] = {};
-            if (!monthlyManualData[monthKey][person]) monthlyManualData[monthKey][person] = {};
-            
-            const num = val === "" ? 0 : parseFloat(val);
-            monthlyManualData[monthKey][person][dayNum] = isNaN(num) ? 0 : num;
-
-            // Hakediş/Borç tablolarını dinamik güncelle
+        function updateManualHour(mKey, pId, dNum, val) {
+            if (!monthlyManualData[mKey]) monthlyManualData[mKey] = {};
+            if (!monthlyManualData[mKey][pId]) monthlyManualData[mKey][pId] = {};
+            monthlyManualData[mKey][pId][dNum] = val === "" ? 0 : (isNaN(parseFloat(val)) ? 0 : parseFloat(val));
             renderMonthlySummaries();
-        }
-
-        function getDaysInMonth(year, month) {
-            return new Date(year, month, 0).getDate();
+            updateCharts();
         }
 
         function renderHistory() {
             renderMonthlySummaries();
             renderWeeklyTables();
+            updateCharts();
+        }
+
+        // --- İSTATİSTİK & GRAFİK (CHART.JS) ---
+        function updateCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#cbd5e1' : '#475569';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+
+            const staffTotals = {};
+            staff.forEach(p => staffTotals[p.id] = 0);
+            
+            Object.keys(monthlyManualData).forEach(mKey => {
+                staff.forEach(p => {
+                    const daysObj = monthlyManualData[mKey][p.id] || {};
+                    Object.values(daysObj).forEach(h => staffTotals[p.id] += (h || 0));
+                });
+            });
+
+            const labels = staff.map(p => p.name);
+            const dataValues = staff.map(p => staffTotals[p.id]);
+            const backgroundColors = staff.map(p => p.color);
+
+            const ctxBar = document.getElementById('monthlyHoursChart').getContext('2d');
+            if (monthlyChartInstance) monthlyChartInstance.destroy();
+            
+            monthlyChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Toplam Çalışılan Saat',
+                            data: dataValues,
+                            backgroundColor: backgroundColors,
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Hedef Saat',
+                            data: staff.map(() => settings.monthlyTarget),
+                            type: 'line',
+                            borderColor: isDark ? '#f87171' : '#ef4444',
+                            borderWidth: 2,
+                            borderDash: [4, 4],
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: textColor } } },
+                    scales: {
+                        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                        y: { ticks: { color: textColor }, grid: { color: gridColor }, beginAtZero: true }
+                    }
+                }
+            });
+
+            const ctxDonut = document.getElementById('workloadDoughnutChart').getContext('2d');
+            if (workloadChartInstance) workloadChartInstance.destroy();
+
+            workloadChartInstance = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: textColor } } }
+                }
+            });
+        }
+
+        function updateChartsTheme() {
+            if (acceptedWeeks.length > 0) updateCharts();
         }
 
         function renderMonthlySummaries() {
-            const monthlyContainer = document.getElementById('monthlySummaryContainer');
-            monthlyContainer.innerHTML = '<h3 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2">Aylık Özet (Hakediş / Borç) & Günlük Çalışma Saatleri</h3>';
+            const container = document.getElementById('monthlySummaryContainer');
+            container.innerHTML = '<h3 class="text-xl font-bold mb-4 border-b dark:border-slate-700 pb-2">Aylık Özet (Hakediş / Borç)</h3>';
             
-            // Eğer hiç ay yoksa
-            const monthKeys = Object.keys(monthlyManualData).sort();
-            if (monthKeys.length === 0) {
-                monthlyContainer.innerHTML += '<p class="text-sm text-slate-400 italic">Henüz onaylanmış çizelge bulunmuyor.</p>';
-                return;
-            }
+            const keys = Object.keys(monthlyManualData).sort();
+            if (keys.length === 0) { container.innerHTML += '<p class="text-sm italic text-slate-500">Kayıt yok.</p>'; return; }
 
-            monthKeys.forEach(monthKey => {
-                const [yearStr, monthStr] = monthKey.split('-');
-                const year = parseInt(yearStr, 10);
-                const month = parseInt(monthStr, 10);
-                const daysCount = getDaysInMonth(year, month);
-                const monthName = new Date(year, month - 1, 1).toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+            keys.forEach(mKey => {
+                const [year, month] = mKey.split('-');
+                const daysCount = new Date(year, month, 0).getDate();
+                const mName = new Date(year, month - 1, 1).toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
 
-                if (!monthlyManualData[monthKey]) {
-                    monthlyManualData[monthKey] = {};
-                    staff.forEach(p => monthlyManualData[monthKey][p] = {});
-                }
-
-                // Toplam saat hesapla
-                const staffTotals = {};
-                staff.forEach(person => {
-                    let total = 0;
-                    const pData = monthlyManualData[monthKey][person] || {};
-                    for (let d = 1; d <= daysCount; d++) {
-                        total += (pData[d] || 0);
-                    }
-                    staffTotals[person] = total;
+                const totals = {};
+                staff.forEach(p => {
+                    let tot = 0; const d = monthlyManualData[mKey][p.id] || {};
+                    for(let i=1; i<=daysCount; i++) tot += (d[i]||0);
+                    totals[p.id] = tot;
                 });
 
-                let html = `<div class="mb-10 border border-slate-200 rounded-xl p-5 bg-slate-50/50 page-break-avoid">`;
-                html += `<h4 class="font-bold text-lg text-blue-700 mb-4">${monthName}</h4>`;
-
-                // 1. Hakediş / Borç Kartları
-                html += `<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">`;
-                staff.forEach(person => {
-                    const hours = staffTotals[person];
-                    const diff = hours - 180;
-                    let diffHtml = '';
-                    if (diff > 0) diffHtml = `<div class="text-green-600 text-sm font-bold mt-1">+${diff} Saat Hakediş</div>`;
-                    else if (diff < 0) diffHtml = `<div class="text-red-600 text-sm font-bold mt-1">${diff} Saat Borç</div>`;
-                    else diffHtml = `<div class="text-slate-500 text-sm font-bold mt-1">Denk (0)</div>`;
+                let html = `<div class="mb-10 border dark:border-slate-700 rounded-xl p-5 bg-slate-50/50 dark:bg-slate-800 page-break-avoid">
+                            <h4 class="font-bold text-lg text-blue-700 dark:text-blue-400 mb-4">${mName}</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">`;
+                
+                staff.forEach(p => {
+                    const hrs = totals[p.id]; const diff = hrs - settings.monthlyTarget;
+                    let stat = diff > 0 ? `<div class="text-green-600 dark:text-green-400 text-sm font-bold mt-1">+${diff}s Hakediş</div>` 
+                             : diff < 0 ? `<div class="text-red-600 dark:text-red-400 text-sm font-bold mt-1">${diff}s Borç</div>` 
+                             : `<div class="text-slate-500 text-sm font-bold mt-1">Denk</div>`;
                     
-                    html += `
-                        <div class="border border-slate-200 rounded-lg p-3 bg-white shadow-sm text-center">
-                            <div class="font-bold text-slate-700">${person}</div>
-                            <div class="text-2xl font-black mt-1">${hours} <span class="text-sm font-medium text-slate-400">sa</span></div>
-                            ${diffHtml}
-                        </div>`;
+                    html += `<div class="border dark:border-slate-700 rounded-lg p-3 bg-white dark:bg-slate-700 shadow-sm text-center">
+                                <div class="font-bold" style="color:${p.color}">${p.name}</div>
+                                <div class="text-2xl font-black mt-1 dark:text-white">${hrs}<span class="text-sm font-medium opacity-50">sa</span></div>
+                                ${stat}
+                            </div>`;
                 });
                 html += `</div>`;
 
-                // 2. Günlük Çalışma Süresi Tablosu (Manuel Düzenlenebilir)
-                html += `<div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-                            <div class="bg-slate-100 px-4 py-2 border-b border-slate-200 flex justify-between items-center">
-                                <span class="text-xs font-bold text-slate-700 uppercase">Günlük Çalışma Saatleri Matrisi (Tüm Hücreler Düzenlenebilir)</span>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-xs text-center border-collapse">
-                                    <thead>
-                                        <tr class="bg-slate-50 border-b border-slate-200">
-                                            <th class="p-2 border-r text-left font-bold w-24">Personel \ Gün</th>`;
-                for (let d = 1; d <= daysCount; d++) {
-                    html += `<th class="p-1.5 border-r font-semibold w-10">${d}</th>`;
-                }
-                html += `           <th class="p-2 font-bold w-20 bg-blue-50 text-blue-800">Toplam</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-200">`;
+                html += `<div class="bg-white dark:bg-slate-700 rounded-lg border dark:border-slate-600 overflow-x-auto shadow-sm">
+                            <table class="w-full text-xs text-center border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 dark:bg-slate-800 border-b dark:border-slate-600">
+                                        <th class="p-2 border-r dark:border-slate-600 text-left font-bold w-24">Personel \\ Gün</th>`;
+                for (let d = 1; d <= daysCount; d++) html += `<th class="p-1 border-r dark:border-slate-600 w-8">${d}</th>`;
+                html += `       </tr></thead><tbody class="divide-y divide-slate-200 dark:divide-slate-600">`;
 
-                staff.forEach(person => {
-                    let pClass = person==='Suat'?'staff-suat':person==='Eren'?'staff-eren':person==='Onur'?'staff-onur':'staff-yagmur';
-                    html += `<tr><td class="p-2 font-bold border-r text-left ${pClass}">${person}</td>`;
-                    
+                staff.forEach(p => {
+                    html += `<tr><td class="p-2 font-bold border-r dark:border-slate-600 text-left" style="color:${p.color}">${p.name}</td>`;
                     for (let d = 1; d <= daysCount; d++) {
-                        const val = monthlyManualData[monthKey][person][d] !== undefined ? monthlyManualData[monthKey][person][d] : "";
-                        html += `<td class="p-1 border-r"><input type="number" min="0" max="24" value="${val}" oninput="updateManualHour('${monthKey}', '${person}', ${d}, this.value)" class="w-10 text-center border border-slate-200 rounded py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"></td>`;
+                        const val = monthlyManualData[mKey][p.id] && monthlyManualData[mKey][p.id][d] !== undefined ? monthlyManualData[mKey][p.id][d] : "";
+                        html += `<td class="p-1 border-r dark:border-slate-600"><input type="number" value="${val}" oninput="updateManualHour('${mKey}', '${p.id}', ${d}, this.value)" class="w-8 text-center border rounded py-1 bg-transparent dark:text-white focus:ring-1 focus:outline-none"></td>`;
                     }
-                    html += `<td class="p-2 font-bold bg-blue-50/30 text-blue-800">${staffTotals[person]}s</td></tr>`;
+                    html += `</tr>`;
                 });
-
-                html += `           </tbody>
-                                </table>
-                            </div>
-                         </div>`;
-                html += `</div>`;
-                monthlyContainer.innerHTML += html;
+                html += `</tbody></table></div></div>`;
+                container.innerHTML += html;
             });
         }
 
         function renderWeeklyTables() {
-            const weeklyContainer = document.getElementById('weeklyTablesContainer');
-            weeklyContainer.innerHTML = '<h3 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2">Onaylanan Haftalık Çizelgeler</h3>';
+            const container = document.getElementById('weeklyTablesContainer');
+            container.innerHTML = '<h3 class="text-xl font-bold mb-4 border-b dark:border-slate-700 pb-2">Haftalık Çizelgeler</h3>';
             
             acceptedWeeks.forEach((week, wIndex) => {
                 let html = `
-                <div class="mb-8 border border-slate-200 rounded-lg overflow-hidden shadow-sm page-break-avoid">
-                    <div class="bg-slate-100 px-4 py-3 flex justify-between items-center border-b border-slate-200">
-                        <h4 class="font-bold text-slate-800">Tarih: ${week.startDateStr} - ${week.endDateStr} <span class="text-xs bg-white border border-slate-300 px-2 py-0.5 rounded text-slate-600 font-medium ml-2">Hafta ${wIndex + 1}</span></h4>
-                        <div class="flex items-center gap-2">
-                            <!-- Yeni Düzenle Butonu -->
-                            <button onclick="editAcceptedWeek(${week.id})" class="bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded transition-colors">
-                                Düzenle
-                            </button>
-                            <button onclick="deleteAcceptedWeek(${week.id})" class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-3 py-1.5 rounded transition-colors">
-                                Bu Haftayı Sil
-                            </button>
+                <div class="mb-8 border dark:border-slate-700 rounded-lg overflow-hidden shadow-sm page-break-avoid">
+                    <div class="bg-slate-100 dark:bg-slate-800 px-4 py-3 flex justify-between items-center border-b dark:border-slate-700">
+                        <h4 class="font-bold">${week.startDateStr} - ${week.endDateStr} <span class="text-xs bg-white dark:bg-slate-700 border px-2 py-0.5 rounded ml-2">Hafta ${wIndex + 1}</span></h4>
+                        <div class="flex gap-2">
+                            <button onclick="shareWhatsApp(${week.id})" class="bg-green-100 hover:bg-green-200 dark:bg-green-900/50 dark:hover:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold px-3 py-1.5 rounded transition-colors flex items-center gap-1"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> WhatsApp</button>
+                            <button onclick="deleteAcceptedWeek(${week.id})" class="bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900 text-red-700 dark:text-red-300 text-xs font-bold px-3 py-1.5 rounded transition-colors">Sil</button>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto bg-white dark:bg-slate-750">
                         <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-slate-600 uppercase bg-slate-50 border-b border-slate-200">
+                            <thead class="text-xs uppercase bg-slate-50 dark:bg-slate-700 border-b dark:border-slate-600">
                                 <tr>
-                                    <th class="px-3 py-2 font-bold text-center border-r w-24">Personel</th>
-                                    ${daysOfWeek.map(d => `<th class="px-2 py-2 font-semibold text-center border-r w-28 ${d==='Cumartesi'||d==='Pazar'?'bg-amber-50/50 text-amber-800':''}">${d}</th>`).join('')}
-                                    <th class="px-2 py-2 font-bold text-center w-24 bg-blue-50 text-blue-800">Haftalık Toplam</th>
+                                    <th class="px-3 py-2 font-bold text-center border-r dark:border-slate-600 w-24">Personel</th>
+                                    ${daysOfWeek.map(d => `<th class="px-2 py-2 font-semibold text-center border-r dark:border-slate-600 w-28">${d}</th>`).join('')}
+                                    <th class="px-2 py-2 font-bold text-center w-24">Top.</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-200">`;
+                            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">`;
 
-                const matrixData = {};
-                staff.forEach(p => { matrixData[p] = {}; daysOfWeek.forEach(d => matrixData[p][d] = []); });
-                week.schedule.forEach(item => matrixData[item.person][item.shift.day].push(item.shift));
+                const matrix = {};
+                staff.forEach(p => { matrix[p.id] = {}; daysOfWeek.forEach(d => matrix[p.id][d] = []); });
+                week.schedule.forEach(i => { if(matrix[i.personId]) matrix[i.personId][i.shift.day].push(i.shift); });
 
-                staff.forEach(person => {
-                    let pClass = person==='Suat'?'staff-suat':person==='Eren'?'staff-eren':person==='Onur'?'staff-onur':'staff-yagmur';
-                    html += `<tr><td class="px-2 py-3 font-bold text-center border-r border-slate-200 ${pClass}">${person}</td>`;
-                    
+                staff.forEach(p => {
+                    html += `<tr><td class="px-2 py-3 font-bold text-center border-r dark:border-slate-600" style="color:${p.color}">${p.name}</td>`;
                     daysOfWeek.forEach(day => {
-                        const shifts = matrixData[person][day];
-                        const isWknd = (day==='Cumartesi'||day==='Pazar');
-                        html += `<td class="px-1 py-2 align-middle text-center border-r border-slate-200 ${isWknd?'bg-amber-50/20':''}">`;
-                        if(shifts.length>0) {
+                        const s = matrix[p.id][day];
+                        html += `<td class="px-1 py-2 align-middle text-center border-r dark:border-slate-600">`;
+                        if(s.length>0) {
                             html += `<div class="flex flex-col gap-1 items-center">`;
-                            shifts.forEach(s => {
-                                const bCol = s.hours===12 ? 'bg-blue-600 text-white' : 'bg-slate-100 border border-slate-300 text-slate-700';
-                                html += `<div class="px-1.5 py-1 rounded font-medium text-[10px] whitespace-nowrap w-full ${bCol}">${s.time}</div>`;
-                            });
+                            s.forEach(sh => html += `<div class="px-1.5 py-1 rounded font-medium text-[10px] whitespace-nowrap text-white w-full" style="background-color:${hexToRgba(p.color,0.9)}">${sh.time}</div>`);
                             html += `</div>`;
-                        } else {
-                            html += `<span class="text-slate-300 text-xs italic">-</span>`;
-                        }
+                        } else html += `<span class="text-slate-300 dark:text-slate-500">-</span>`;
                         html += `</td>`;
                     });
-                    html += `<td class="px-2 py-3 font-bold text-center bg-blue-50/30 text-blue-800">${week.weeklyHours[person]}s</td></tr>`;
+                    html += `<td class="px-2 py-3 font-bold text-center">${week.weeklyHours[p.id] || 0}s</td></tr>`;
                 });
-
                 html += `</tbody></table></div></div>`;
-                weeklyContainer.innerHTML += html;
+                container.innerHTML += html;
             });
         }
 
-        function exportToPDF() {
-            const element = document.getElementById('exportContainer');
-            const opt = {
-                margin:       [15, 10, 15, 10], 
-                filename:     'Vardiya_Cizelgesi_Raporu.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
-                pagebreak:    { mode: 'css', avoid: '.page-break-avoid' }
-            };
-
-            // ÖNEMLİ KISIM: Verileri JSON olarak string yapıp, PDF meta verisine gömüyoruz.
-            const stateToSave = {
-                acceptedWeeks: acceptedWeeks,
-                monthlyManualData: monthlyManualData
-            };
-            const stateString = JSON.stringify(stateToSave);
-            // Türkçe/Özel karakter sorununu önlemek için encode + base64 kullanıyoruz.
-            const encodedState = btoa(unescape(encodeURIComponent(stateString)));
-
-            // html2pdf söz verisi (promise) kullanarak kaydetmeden önce araya giriyoruz
-            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-                // PDF'in Subject (Konu) özellik alanına gizlice verilerimizi ekliyoruz.
-                pdf.setProperties({
-                    subject: "FlowTeamShiftPlannerState:" + encodedState
-                });
-            }).save();
+        function shareWhatsApp(weekId) {
+            const week = acceptedWeeks.find(w => w.id === weekId);
+            if(!week) return;
+            let text = `🗓️ *${week.startDateStr} - ${week.endDateStr} Haftası Vardiyası*\n\n`;
+            staff.forEach(p => {
+                const s = week.schedule.filter(x => x.personId === p.id);
+                if (s.length > 0) {
+                    text += `🧑‍💻 *${p.name}* (${week.weeklyHours[p.id]}sa):\n`;
+                    daysOfWeek.forEach(d => {
+                        const dShifts = s.filter(x => x.shift.day === d);
+                        if(dShifts.length > 0) text += `  - ${d}: ${dShifts.map(x=>x.shift.time).join(', ')}\n`;
+                    });
+                } else {
+                    text += `🧑‍💻 *${p.name}*: İzinli/Boş\n`;
+                }
+                text += `\n`;
+            });
+            navigator.clipboard.writeText(text).then(() => alert("WhatsApp metni panoya kopyalandı! Dilediğiniz yere yapıştırabilirsiniz."));
         }
 
-        // --- YENİ EKLENEN PDF İÇE AKTARMA FONKSİYONU ---
+        function exportToPDF() {
+            const wasDark = document.documentElement.classList.contains('dark');
+            document.documentElement.classList.remove('dark');
+            setTimeout(() => {
+                const element = document.getElementById('exportContainer');
+                const opt = { margin: [15,10,15,10], filename: 'Vardiya_Cizelgesi.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, pagebreak: { mode: 'css', avoid: '.page-break-avoid' }};
+                
+                const state = { acceptedWeeks, monthlyManualData, staff, settings };
+                const enc = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+                
+                html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
+                    pdf.setProperties({ subject: "FTSPState:" + enc });
+                }).save().then(() => {
+                    if (wasDark) document.documentElement.classList.add('dark');
+                });
+            }, 100);
+        }
+
         async function importFromPDF(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = async function(e) {
                 try {
-                    const arrayBuffer = e.target.result;
-                    // PDF-lib yardımıyla dosyayı okuyoruz
-                    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                    const subject = pdfDoc.getSubject();
-
-                    if (subject && subject.startsWith("FlowTeamShiftPlannerState:")) {
-                        const encodedState = subject.replace("FlowTeamShiftPlannerState:", "");
-                        const decodedState = decodeURIComponent(escape(atob(encodedState)));
-                        const state = JSON.parse(decodedState);
-
-                        // String'e dönüşmüş olan tarih (Date) nesnelerini geri Date objesi yapıyoruz
-                        if (state.acceptedWeeks) {
-                            state.acceptedWeeks.forEach(week => {
-                                week.startDateObj = new Date(week.startDateObj);
-                            });
+                    const doc = await PDFLib.PDFDocument.load(e.target.result);
+                    const sub = doc.getSubject();
+                    if (sub && sub.startsWith("FTSPState:")) {
+                        const state = JSON.parse(decodeURIComponent(escape(atob(sub.replace("FTSPState:", "")))));
+                        if(state.staff) staff = state.staff;
+                        if(state.settings) settings = state.settings;
+                        if(state.monthlyManualData) monthlyManualData = state.monthlyManualData;
+                        if(state.acceptedWeeks) {
+                            state.acceptedWeeks.forEach(w => w.startDateObj = new Date(w.startDateObj));
                             acceptedWeeks = state.acceptedWeeks;
                         }
-                        if (state.monthlyManualData) {
-                            monthlyManualData = state.monthlyManualData;
-                        }
-
-                        // Ekranı yeni yüklenen verilere göre yeniden çiz
+                        initSettingsUI();
+                        renderConstraintsTable();
                         renderHistory();
-                        
                         document.getElementById('historySection').classList.remove('hidden');
                         document.getElementById('historySection').classList.add('flex');
-                        
-                        alert("PDF içerisindeki vardiya verileri başarıyla geri yüklendi! Artık düzenlemeye devam edebilirsiniz.");
-                    } else {
-                        alert("Bu PDF dosyası geçerli bir vardiya verisi içermiyor veya içe aktarma özelliği eklenmeden önce oluşturulmuş eski bir sürüm.");
-                    }
-                } catch (error) {
-                    console.error("PDF okuma hatası:", error);
-                    alert("PDF okunurken bir hata oluştu. Lütfen doğru PDF dosyasını seçtiğinizden emin olun.");
-                }
-                
-                // Aynı dosyayı arka arkaya seçebilmek için input'u sıfırlıyoruz.
+                        alert("Veriler PDF'ten yüklendi!");
+                    } else alert("Geçersiz PDF.");
+                } catch (err) { alert("Hata: " + err); }
                 event.target.value = '';
             };
-            
             reader.readAsArrayBuffer(file);
         }
 
         function exportToExcel() {
-            if (acceptedWeeks.length === 0) {
-                alert("Henüz onaylanmış bir çizelge yok.");
-                return;
-            }
+            if (acceptedWeeks.length === 0) return alert("Çizelge yok.");
             const wb = XLSX.utils.book_new();
-            let ws_data = [];
+            let ws_data = [["ONAYLANAN HAFTALIK ÇİZELGELER"], []];
             
-            ws_data.push(["AYLIK ÖZET (Hakediş / Borç)"]);
-            ws_data.push([]);
-            
-            for(const [monthKey, data] of Object.entries(monthlyManualData)) {
-                const [yearStr, monthStr] = monthKey.split('-');
-                const monthName = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1).toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
-                ws_data.push([monthName]);
-                ws_data.push(["Personel", "Toplam Çalışma (Saat)", "Durum"]);
+            acceptedWeeks.forEach((week, wI) => {
+                ws_data.push([`Hafta ${wI + 1}: ${week.startDateStr} - ${week.endDateStr}`]);
+                ws_data.push(["Personel", ...daysOfWeek, "Toplam"]);
                 
-                staff.forEach(person => {
-                    let hours = 0;
-                    const pData = monthlyManualData[monthKey][person] || {};
-                    for(let d in pData) hours += (pData[d] || 0);
-
-                    const diff = hours - 180;
-                    let durum = diff > 0 ? `+${diff} Saat Hakediş` : diff < 0 ? `${diff} Saat Borç` : `Denk (0)`;
-                    ws_data.push([person, hours, durum]);
-                });
-                ws_data.push([]);
-            }
-            
-            ws_data.push(["ONAYLANAN HAFTALIK ÇİZELGELER"]);
-            ws_data.push([]);
-            
-            acceptedWeeks.forEach((week, wIndex) => {
-                ws_data.push([`Hafta ${wIndex + 1}: ${week.startDateStr} - ${week.endDateStr}`]);
-                const header = ["Personel", ...daysOfWeek, "Haftalık Toplam"];
-                ws_data.push(header);
-                
-                const matrixData = {};
-                staff.forEach(p => { matrixData[p] = {}; daysOfWeek.forEach(d => matrixData[p][d] = []); });
-                week.schedule.forEach(item => matrixData[item.person][item.shift.day].push(item.shift));
-
-                staff.forEach(person => {
-                    let row = [person];
-                    daysOfWeek.forEach(day => {
-                        const shifts = matrixData[person][day];
-                        if(shifts.length > 0) {
-                            row.push(shifts.map(s => s.time).join(", "));
-                        } else {
-                            row.push("İzin");
-                        }
+                staff.forEach(p => {
+                    let row = [p.name];
+                    daysOfWeek.forEach(d => {
+                        let shifts = week.schedule.filter(x => x.personId === p.id && x.shift.day === d);
+                        row.push(shifts.length > 0 ? shifts.map(s => s.shift.time).join(", ") : "İzin");
                     });
-                    row.push(week.weeklyHours[person]);
+                    row.push(week.weeklyHours[p.id] || 0);
                     ws_data.push(row);
                 });
                 ws_data.push([]);
             });
-            
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            const cols = [{wch:15}, {wch:18}, {wch:18}, {wch:18}, {wch:18}, {wch:18}, {wch:18}, {wch:18}, {wch:15}];
-            ws['!cols'] = cols;
-            
-            XLSX.utils.book_append_sheet(wb, ws, "Vardiya Raporu");
-            XLSX.writeFile(wb, "Vardiya_Cizelgesi_Raporu.xlsx");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ws_data), "Rapor");
+            XLSX.writeFile(wb, "Vardiya_Raporu.xlsx");
         }
     </script>
 </body>
