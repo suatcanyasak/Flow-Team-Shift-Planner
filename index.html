@@ -64,51 +64,57 @@
             --theme-800: #6b21a8; --theme-900: #581c87;
         }
 
-        /* Ek Görünüm Modları */
-        body[data-mode="sepia"] {
-            background-color: #fbf0d9 !important;
-            color: #5f4b32 !important;
-        }
-        body[data-mode="sepia"] header, body[data-mode="sepia"] .bg-white, body[data-mode="sepia"] div[class*="bg-white"] {
+        /* --- GELİŞTİRİLMİŞ EK GÖRÜNÜM MODLARI --- */
+        /* Sepya Modu */
+        body[data-mode="sepia"] { background-color: #fbf0d9 !important; color: #5f4b32 !important; }
+        body[data-mode="sepia"] header,
+        body[data-mode="sepia"] .bg-white,
+        body[data-mode="sepia"] div[class*="bg-white"],
+        body[data-mode="sepia"] .bg-slate-50,
+        body[data-mode="sepia"] .bg-slate-100,
+        body[data-mode="sepia"] .bg-slate-200 {
             background-color: #f4ece1 !important;
             color: #5f4b32 !important;
             border-color: #d8c2a3 !important;
         }
-        body[data-mode="sepia"] input, body[data-mode="sepia"] select {
-            background-color: #faf5ed !important;
-            color: #5f4b32 !important;
-            border-color: #d8c2a3 !important;
+        body[data-mode="sepia"] input, body[data-mode="sepia"] select, body[data-mode="sepia"] thead {
+            background-color: #eaddc5 !important; color: #5f4b32 !important; border-color: #d8c2a3 !important;
         }
+        body[data-mode="sepia"] td, body[data-mode="sepia"] th { border-color: #d8c2a3 !important; }
 
-        body[data-mode="light-blue"] {
-            background-color: #f0f7ff !important;
-            color: #1e3a8a !important;
+        /* Açık Mavi Modu */
+        body[data-mode="light-blue"] { background-color: #e0f2fe !important; color: #0c4a6e !important; }
+        body[data-mode="light-blue"] header,
+        body[data-mode="light-blue"] .bg-white,
+        body[data-mode="light-blue"] div[class*="bg-white"],
+        body[data-mode="light-blue"] .bg-slate-50,
+        body[data-mode="light-blue"] .bg-slate-100,
+        body[data-mode="light-blue"] .bg-slate-200 {
+            background-color: #f0f9ff !important;
+            color: #0c4a6e !important;
+            border-color: #bae6fd !important;
         }
-        body[data-mode="light-blue"] header, body[data-mode="light-blue"] .bg-white, body[data-mode="light-blue"] div[class*="bg-white"] {
-            background-color: #ffffff !important;
-            color: #1e3a8a !important;
-            border-color: #bfdbfe !important;
+        body[data-mode="light-blue"] input, body[data-mode="light-blue"] select, body[data-mode="light-blue"] thead {
+            background-color: #e0f2fe !important; color: #0c4a6e !important; border-color: #7dd3fc !important;
         }
-        body[data-mode="light-blue"] input, body[data-mode="light-blue"] select {
-            background-color: #f8fafc !important;
-            color: #1e3a8a !important;
-            border-color: #bfdbfe !important;
-        }
+        body[data-mode="light-blue"] td, body[data-mode="light-blue"] th { border-color: #bae6fd !important; }
 
-        body[data-mode="light-green"] {
+        /* Açık Yeşil Modu */
+        body[data-mode="light-green"] { background-color: #dcfce3 !important; color: #052e16 !important; }
+        body[data-mode="light-green"] header,
+        body[data-mode="light-green"] .bg-white,
+        body[data-mode="light-green"] div[class*="bg-white"],
+        body[data-mode="light-green"] .bg-slate-50,
+        body[data-mode="light-green"] .bg-slate-100,
+        body[data-mode="light-green"] .bg-slate-200 {
             background-color: #f0fdf4 !important;
-            color: #14532d !important;
-        }
-        body[data-mode="light-green"] header, body[data-mode="light-green"] .bg-white, body[data-mode="light-green"] div[class*="bg-white"] {
-            background-color: #ffffff !important;
-            color: #14532d !important;
+            color: #052e16 !important;
             border-color: #bbf7d0 !important;
         }
-        body[data-mode="light-green"] input, body[data-mode="light-green"] select {
-            background-color: #f7fee7 !important;
-            color: #14532d !important;
-            border-color: #bbf7d0 !important;
+        body[data-mode="light-green"] input, body[data-mode="light-green"] select, body[data-mode="light-green"] thead {
+            background-color: #dcfce3 !important; color: #052e16 !important; border-color: #86efac !important;
         }
+        body[data-mode="light-green"] td, body[data-mode="light-green"] th { border-color: #bbf7d0 !important; }
 
         input[type="checkbox"] { width: 1.25rem; height: 1.25rem; accent-color: var(--theme-500); cursor: pointer; }
         .loader { border-top-color: var(--theme-500); -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
@@ -140,7 +146,7 @@
                 <select id="modeSelector" onchange="setMode(this.value)" class="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 outline-none cursor-pointer">
                     <option value="light">☀️ Aydınlık Mod</option>
                     <option value="dark">🌙 Koyu Mod</option>
-                    <option value="sepia">📜 Sepia Mod</option>
+                    <option value="sepia">📜 Sepya Mod</option>
                     <option value="light-blue">🔵 Açık Mavi Mod</option>
                     <option value="light-green">🟢 Açık Yeşil Mod</option>
                 </select>
@@ -148,6 +154,12 @@
                 <button onclick="document.getElementById('settingsModal').classList.remove('hidden')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     Ayarlar
+                </button>
+
+                <!-- Tümünü Sil Butonu -->
+                <button onclick="clearAllData()" class="bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900 text-red-700 dark:text-red-300 px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Tümünü Sil
                 </button>
 
                 <div class="relative group">
@@ -540,6 +552,15 @@
                         document.getElementById('historySection').classList.add('flex');
                     }
                 } catch(e) { console.error("Kayıtlı veri okunamadı", e); }
+            }
+        }
+
+        // --- TÜMÜNÜ SİL FONKSİYONU ---
+        function clearAllData() {
+            if(confirm("Tüm veriler (ayarlar, personeller, onaylanan çizelgeler, geçmiş) tamamen silinecek. Bu işlem geri alınamaz! Onaylıyor musunuz?")) {
+                localStorage.removeItem('ftsp_state_v3');
+                localStorage.removeItem('ftsp_state_v2');
+                location.reload(); // Sayfayı yenileyerek tamamen sıfırlanmış hale getirir
             }
         }
 
@@ -1517,63 +1538,6 @@
                 } catch (err) { alert("Hata: " + err); }
                 event.target.value = false;
             };
-            reader.readAsArrayBuffer(file);
-        }
-
-        async function exportToExcel() {
-            if (acceptedWeeks.length === 0) return alert("Çizelge yok.");
-            const wb = XLSX.utils.book_new();
-
-            let ws_data = [["ONAYLANAN HAFTALIK ÇİZELGELER"], []];
-            acceptedWeeks.forEach((week) => {
-                ws_data.push([`Hafta ${week.weekNumber}: ${week.startDateStr} - ${week.endDateStr}`]);
-                ws_data.push(["Personel", ...daysOfWeek, "Toplam"]);
-                staff.forEach(p => {
-                    let row = [p.name];
-                    daysOfWeek.forEach(d => {
-                        let shifts = week.schedule.filter(x => x.personId === p.id && x.shift.day === d);
-                        row.push(shifts.length > 0 ? shifts.map(s => s.shift.time).join(", ") : "İzin");
-                    });
-                    row.push(week.weeklyHours[p.id] || 0); ws_data.push(row);
-                });
-                ws_data.push([]);
-            });
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ws_data), "Haftalık Rapor");
-
-            let monthly_data = [["AYLIK VARDİYA ÖZETİ VE İSTATİSTİKLERİ"], []];
-            Object.keys(monthlyManualData).sort().forEach(mKey => {
-                monthly_data.push([mKey + " Dönemi"]);
-                const shiftStats = {}; const allShifts = new Set();
-                staff.forEach(p => {
-                    shiftStats[p.id] = { total: 0 };
-                    Object.values(monthlyManualData[mKey][p.id] || {}).forEach(cell => {
-                        if (cell.hours > 0) {
-                            let s = cell.shift || "Belirtilmemiş";
-                            if (!shiftStats[p.id][s]) shiftStats[p.id][s] = 0;
-                            shiftStats[p.id][s] += cell.hours; shiftStats[p.id].total += cell.hours;
-                            allShifts.add(s);
-                        }
-                    });
-                });
-                const uShifts = Array.from(allShifts).sort();
-                let header = ["Personel", "Toplam Saat"];
-                uShifts.forEach(s => header.push(s + " (Saat)", s + " (%)")); monthly_data.push(header);
-                staff.forEach(p => {
-                    let row = [p.name, shiftStats[p.id].total];
-                    uShifts.forEach(s => {
-                        let h = shiftStats[p.id][s] || 0;
-                        let perc = shiftStats[p.id].total > 0 ? Math.round((h / shiftStats[p.id].total) * 100) : 0;
-                        row.push(h, "%" + perc);
-                    });
-                    monthly_data.push(row);
-                });
-                monthly_data.push([]);
-            });
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monthly_data), "Aylık Özet");
-
-            const excelBlob = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([excelBlob], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            await saveFileAs(blob, 'Vardiya_Raporu.xlsx', 'Excel Dosyası', '.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         }
     </script>
 </body>
