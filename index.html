@@ -65,7 +65,6 @@
         }
 
         /* --- GELİŞTİRİLMİŞ EK GÖRÜNÜM MODLARI --- */
-        /* Sepya Modu */
         body[data-mode="sepia"] { background-color: #fbf0d9 !important; color: #5f4b32 !important; }
         body[data-mode="sepia"] header,
         body[data-mode="sepia"] .bg-white,
@@ -82,7 +81,6 @@
         }
         body[data-mode="sepia"] td, body[data-mode="sepia"] th { border-color: #d8c2a3 !important; }
 
-        /* Açık Mavi Modu */
         body[data-mode="light-blue"] { background-color: #e0f2fe !important; color: #0c4a6e !important; }
         body[data-mode="light-blue"] header,
         body[data-mode="light-blue"] .bg-white,
@@ -99,7 +97,6 @@
         }
         body[data-mode="light-blue"] td, body[data-mode="light-blue"] th { border-color: #bae6fd !important; }
 
-        /* Açık Yeşil Modu */
         body[data-mode="light-green"] { background-color: #dcfce3 !important; color: #052e16 !important; }
         body[data-mode="light-green"] header,
         body[data-mode="light-green"] .bg-white,
@@ -119,7 +116,11 @@
         input[type="checkbox"] { width: 1.25rem; height: 1.25rem; accent-color: var(--theme-500); cursor: pointer; }
         .loader { border-top-color: var(--theme-500); -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .page-break-avoid { page-break-inside: avoid; }
+        
+        .page-break-avoid { 
+            page-break-inside: avoid !important; 
+            break-inside: avoid !important; 
+        }
         
         .clickable-shift { cursor: pointer; transition: all 0.15s ease; }
         .clickable-shift:hover { filter: brightness(1.1); transform: translateY(-1px); }
@@ -142,7 +143,6 @@
                 <h1 class="text-2xl font-bold">Flow Team Shift Planner</h1>
             </div>
             <div class="flex items-center gap-3 flex-wrap">
-                <!-- Mod Seçici Dropdown -->
                 <select id="modeSelector" onchange="setMode(this.value)" class="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 outline-none cursor-pointer">
                     <option value="light">☀️ Aydınlık Mod</option>
                     <option value="dark">🌙 Koyu Mod</option>
@@ -156,7 +156,6 @@
                     Ayarlar
                 </button>
 
-                <!-- Tümünü Sil Butonu -->
                 <button onclick="clearAllData()" class="bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900 text-red-700 dark:text-red-300 px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     Tümünü Sil
@@ -238,7 +237,7 @@
                 <div class="bg-theme-50 dark:bg-theme-900/30 border border-theme-200 dark:border-theme-800 rounded-xl p-4 flex justify-between items-center flex-wrap gap-3">
                     <div>
                         <h3 class="font-bold text-theme-800 dark:text-theme-300">Taslak Çizelge Oluşturuldu</h3>
-                        <p class="text-theme-600 dark:text-theme-400 text-sm">Vardiyayı değiştirmek için tablodaki bir hücreye, ardından yer değiştirmek istediğiniz diğer hücreye tıklayın.</p>
+                        <p class="text-theme-600 dark:text-theme-400 text-sm">Vardiyayı değiştirmek veya boş güne taşımak için bir vardiyaya tıklayın, ardından hedef vardiyaya veya personelin alanına tıklayın.</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button onclick="undoEdit()" id="undoBtn" disabled class="bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 shadow-sm">
@@ -296,8 +295,8 @@
             <!-- Geçmiş, Aylık Günlük Listeler & Raporlar Alanı -->
             <div id="historySection" class="hidden flex-col gap-6 mt-8 border-t-2 border-slate-200 dark:border-slate-700 pt-8">
                 
-                <!-- Gelişmiş Filtreleme Alanı -->
-                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap gap-4 items-center justify-between">
+                <!-- Gelişmiş Filtreleme Alanı (PDF'te Gözükmeyecek) -->
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap gap-4 items-center justify-between pdf-hide">
                     <div class="flex items-center gap-3">
                         <svg class="w-5 h-5 text-theme-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                         <h3 class="font-bold">Gelişmiş Filtreleme:</h3>
@@ -314,7 +313,8 @@
 
                 <div class="flex justify-between items-center flex-wrap gap-4">
                     <h2 class="text-2xl font-bold text-slate-800 dark:text-white">Onaylanan Çizelgeler & Analiz</h2>
-                    <div class="flex gap-2 flex-wrap justify-end">
+                    <!-- Dışa Aktar Butonları (PDF'te Gözükmeyecek) -->
+                    <div class="flex gap-2 flex-wrap justify-end pdf-hide">
                         <button onclick="exportJSON()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-colors">
                             JSON İndir
                         </button>
@@ -560,7 +560,7 @@
             if(confirm("Tüm veriler (ayarlar, personeller, onaylanan çizelgeler, geçmiş) tamamen silinecek. Bu işlem geri alınamaz! Onaylıyor musunuz?")) {
                 localStorage.removeItem('ftsp_state_v3');
                 localStorage.removeItem('ftsp_state_v2');
-                location.reload(); // Sayfayı yenileyerek tamamen sıfırlanmış hale getirir
+                location.reload(); 
             }
         }
 
@@ -577,7 +577,7 @@
             updateChartsTheme();
         }
 
-        // --- GELİŞMİŞ İNDİRME FONKSİYONU (File System Access API) ---
+        // --- GELİŞMİŞ İNDİRME FONKSİYONU (İstenilen adla/yere kaydetme) ---
         async function saveFileAs(blob, defaultName, acceptDesc, acceptExt, mimeType) {
             try {
                 if (window.showSaveFilePicker) {
@@ -589,15 +589,20 @@
                     await writable.write(blob);
                     await writable.close();
                 } else {
+                    // Tarayıcı desteklemiyorsa kullanıcının dosya adını seçmesine izin veren fallback
+                    let userInput = prompt("Kaydedilecek dosya adını giriniz:", defaultName);
+                    if (userInput === null) return; // Kullanıcı iptal etti
+                    if (!userInput.endsWith(acceptExt)) userInput += acceptExt;
+
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = defaultName;
+                    a.download = userInput;
                     a.click();
                     URL.revokeObjectURL(url);
                 }
             } catch (err) {
-                console.log("Dosya kaydetme işlemi iptal edildi veya hata oluştu.");
+                console.log("Dosya kaydetme işlemi iptal edildi veya hata oluştu.", err);
             }
         }
 
@@ -936,7 +941,9 @@
             return warnings;
         }
 
-        function handleShiftClick(shiftId) {
+        function handleShiftClick(e, shiftId) {
+            if (e) e.stopPropagation();
+
             if (selectedShiftIdForSwap === null) {
                 selectedShiftIdForSwap = shiftId;
                 renderDraftMatrix(currentGeneratedSchedule);
@@ -958,6 +965,26 @@
                     selectedShiftIdForSwap = null;
                     openConfirmModal(pendingScheduleCandidate);
                 }
+            }
+        }
+
+        function handleCellClick(e, personId) {
+            if (e) e.stopPropagation();
+            if (selectedShiftIdForSwap === null) return;
+            
+            let tempSchedule = JSON.parse(JSON.stringify(currentGeneratedSchedule));
+            let sourceItem = tempSchedule.find(i => i.shift.id === selectedShiftIdForSwap);
+            
+            if (sourceItem) {
+                if (sourceItem.personId === personId) {
+                    selectedShiftIdForSwap = null;
+                    renderDraftMatrix(currentGeneratedSchedule);
+                    return;
+                }
+                sourceItem.personId = personId;
+                pendingScheduleCandidate = tempSchedule;
+                selectedShiftIdForSwap = null;
+                openConfirmModal(pendingScheduleCandidate);
             }
         }
 
@@ -1040,28 +1067,40 @@
 
             const tbody = document.getElementById('matrixTableBody'); tbody.innerHTML = ''; 
 
+            let isMoveTarget = selectedShiftIdForSwap !== null;
+
             staff.forEach(person => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors";
-                let rowHTML = `<td class="px-2 py-4 font-bold text-center border-r border-slate-200 dark:border-slate-700" style="background-color: ${hexToRgba(person.color, 0.1)}; color:${person.color}">${person.name}</td>`;
+                
+                let rowHTML = `<td class="px-2 py-4 font-bold text-center border-r border-slate-200 dark:border-slate-700 cursor-pointer transition-colors ${isMoveTarget ? 'hover:bg-theme-100 dark:hover:bg-theme-900/30' : 'hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}" style="background-color: ${hexToRgba(person.color, 0.1)}; color:${person.color}" onclick="handleCellClick(event, '${person.id}')">${person.name}</td>`;
 
                 daysOfWeek.forEach(day => {
                     const items = matrixData[person.id][day];
                     const bgColClass = (day === 'Cumartesi' || day === 'Pazar') ? 'bg-amber-50/20 dark:bg-amber-900/10' : '';
-                    let cellHTML = `<td class="px-2 py-3 align-middle text-center border-r border-slate-200 dark:border-slate-700 ${bgColClass}">`;
+                    let cursorClass = isMoveTarget ? 'cursor-pointer hover:bg-theme-100 dark:hover:bg-theme-900/30' : '';
+                    
+                    let cellHTML = `<td class="px-2 py-3 align-middle text-center border-r border-slate-200 dark:border-slate-700 transition-colors ${bgColClass} ${cursorClass}" onclick="handleCellClick(event, '${person.id}')">`;
+                    
                     if (items.length > 0) {
                         cellHTML += `<div class="flex flex-col gap-1.5 items-center h-full">`;
                         items.forEach(item => {
                             const isSelected = selectedShiftIdForSwap === item.shift.id;
                             cellHTML += `
-                                <div onclick="handleShiftClick(${item.shift.id})" 
+                                <div onclick="handleShiftClick(event, ${item.shift.id})" 
                                      class="clickable-shift animate-shift-drop flex flex-col items-center justify-center w-full px-2 py-1 rounded shadow-sm text-white ${isSelected ? 'shift-selected' : ''}" style="background-color:${hexToRgba(person.color, 0.9)}; min-height:40px;">
                                     <span class="text-[11px] font-bold">${item.shift.time}</span>
                                     <span class="text-[9px] opacity-80">${person.name}</span>
                                 </div>`;
                         });
                         cellHTML += `</div>`;
-                    } else cellHTML += `<div class="h-full flex items-center justify-center"><span class="text-slate-300 dark:text-slate-500 font-medium text-xs italic">-</span></div>`;
+                    } else {
+                        if (isMoveTarget) {
+                            cellHTML += `<div class="h-full flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 rounded opacity-50 hover:opacity-100 transition-opacity min-h-[40px]"><span class="text-slate-400 dark:text-slate-400 font-medium text-xs italic">Buraya Taşı</span></div>`;
+                        } else {
+                            cellHTML += `<div class="h-full flex items-center justify-center min-h-[40px]"><span class="text-slate-300 dark:text-slate-500 font-medium text-xs italic">-</span></div>`;
+                        }
+                    }
                     cellHTML += `</td>`; rowHTML += cellHTML;
                 });
                 tr.innerHTML = rowHTML; tbody.appendChild(tr);
@@ -1386,7 +1425,7 @@
                 <div class="mb-8 border dark:border-slate-700 rounded-lg overflow-hidden shadow-sm page-break-avoid">
                     <div class="bg-slate-100 dark:bg-slate-800 px-4 py-3 flex justify-between items-center border-b dark:border-slate-700">
                         <h4 class="font-bold">${week.startDateStr} - ${week.endDateStr} <span class="text-xs bg-white dark:bg-slate-700 border px-2 py-0.5 rounded ml-2">Hafta ${week.weekNumber}</span></h4>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 pdf-hide">
                             <button onclick="shareWhatsApp(${week.id})" class="bg-green-100 hover:bg-green-200 dark:bg-green-900/50 dark:hover:bg-green-900 text-green-700 dark:text-green-300 text-xs font-bold px-3 py-1.5 rounded transition-colors flex items-center gap-1"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg> WhatsApp</button>
                             <button onclick="editAcceptedWeek(${week.id})" class="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/50 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-bold px-3 py-1.5 rounded transition-colors">Düzenle</button>
                             <button onclick="deleteAcceptedWeek(${week.id})" class="bg-red-100 hover:bg-red-200 dark:bg-red-900/50 dark:hover:bg-red-900 text-red-700 dark:text-red-300 text-xs font-bold px-3 py-1.5 rounded transition-colors">Sil</button>
@@ -1445,7 +1484,7 @@
             navigator.clipboard.writeText(text).then(() => alert("WhatsApp metni panoya kopyalandı! Dilediğiniz yere yapıştırabilirsiniz."));
         }
 
-        // --- EXPORT/IMPORT JSON ---
+        // --- EXPORT/IMPORT FONKSİYONLARI ---
         async function exportJSON() {
             const state = { settings, staff, acceptedWeeks, monthlyManualData };
             const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -1476,68 +1515,152 @@
                     document.getElementById('historySection').classList.add('flex');
                     alert("Veriler JSON'dan başarıyla yüklendi!");
                 } catch (err) { alert("Hata: JSON dosyası okunamadı. " + err); }
-                event.target.value = false;
+                event.target.value = '';
             };
             reader.readAsText(file);
-        }
-
-        function exportToPDF() {
-            const wasMode = document.body.getAttribute('data-mode');
-            const wasDark = document.documentElement.classList.contains('dark');
-            document.documentElement.classList.remove('dark');
-            document.body.removeAttribute('data-mode');
-            setTimeout(() => {
-                const element = document.getElementById('exportContainer');
-                const opt = { margin: [15,10,15,10], filename: 'Vardiya_Cizelgesi.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }, pagebreak: { mode: 'css', avoid: '.page-break-avoid' }};
-                const state = { acceptedWeeks, monthlyManualData, staff, settings };
-                const enc = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-                
-                html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-                    pdf.setProperties({ subject: "FTSPState:" + enc });
-                }).output('blob').then(async function(blob) {
-                    if (wasDark) document.documentElement.classList.add('dark');
-                    if (wasMode) document.body.setAttribute('data-mode', wasMode);
-                    await saveFileAs(blob, 'Vardiya_Cizelgesi.pdf', 'PDF Dosyası', '.pdf', 'application/pdf');
-                });
-            }, 100);
         }
 
         async function importFromPDF(event) {
             const file = event.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const doc = await PDFLib.PDFDocument.load(e.target.result);
-                    const sub = doc.getSubject();
-                    if (sub && sub.startsWith("FTSPState:")) {
-                        const state = JSON.parse(decodeURIComponent(escape(atob(sub.replace("FTSPState:", "")))));
-                        if(state.staff) staff = state.staff;
-                        if(state.settings) settings = state.settings;
-                        if(state.monthlyManualData) {
-                            Object.keys(state.monthlyManualData).forEach(mKey => {
-                                Object.keys(state.monthlyManualData[mKey]).forEach(pId => {
-                                    Object.keys(state.monthlyManualData[mKey][pId]).forEach(dNum => {
-                                        let val = state.monthlyManualData[mKey][pId][dNum];
-                                        if (typeof val === 'number') state.monthlyManualData[mKey][pId][dNum] = { hours: val, shift: "" };
-                                    });
-                                });
-                            });
-                            monthlyManualData = state.monthlyManualData;
-                        }
-                        if(state.acceptedWeeks) {
-                            state.acceptedWeeks.forEach(w => w.startDateObj = new Date(w.startDateObj));
-                            acceptedWeeks = state.acceptedWeeks;
-                            acceptedWeeks.forEach((w, idx) => w.weekNumber = idx + 1);
-                        }
-                        saveToLocalStorage();
-                        initSettingsUI(); populateFilterOptions(); renderConstraintsTable(); renderHistory();
-                        document.getElementById('historySection').classList.remove('hidden'); document.getElementById('historySection').classList.add('flex');
-                        alert("Veriler PDF'ten yüklendi!");
-                    } else alert("Geçersiz PDF.");
-                } catch (err) { alert("Hata: " + err); }
-                event.target.value = false;
+            
+            try {
+                // PDF dosyasını okuyup pdf-lib kütüphanesine yüklüyoruz
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                
+                // Dışa aktarırken PDF'in "Subject" (Konu) metadatasında sakladığımız JSON verisini çekiyoruz
+                const stateJson = pdfDoc.getSubject();
+                
+                if (!stateJson) {
+                    alert("Bu PDF dosyası geçerli bir yedek verisi (JSON) içermiyor. Daha eski bir sürümde indirilmiş olabilir.");
+                    event.target.value = '';
+                    return;
+                }
+                
+                // JSON verisini parse edip durumu (state) güncelliyoruz
+                const state = JSON.parse(stateJson);
+                
+                if(state.staff) staff = state.staff;
+                if(state.settings) settings = state.settings;
+                if(state.monthlyManualData) monthlyManualData = state.monthlyManualData;
+                if(state.acceptedWeeks) {
+                    state.acceptedWeeks.forEach(w => w.startDateObj = new Date(w.startDateObj));
+                    acceptedWeeks = state.acceptedWeeks;
+                    acceptedWeeks.forEach((w, idx) => w.weekNumber = idx + 1);
+                }
+                
+                // Ekranı yeni verilere göre render ediyoruz
+                saveToLocalStorage();
+                initSettingsUI();
+                populateFilterOptions();
+                renderConstraintsTable();
+                renderHistory();
+                
+                document.getElementById('historySection').classList.remove('hidden');
+                document.getElementById('historySection').classList.add('flex');
+                
+                alert("Veriler PDF'ten başarıyla yüklendi!");
+                
+            } catch (err) {
+                alert("Hata: PDF dosyası okunamadı veya veriler bozuk. Detay: " + err.message);
+                console.error(err);
+            }
+            
+            // Dosya seçim input'unu temizliyoruz (aynı dosyayı art arda seçebilmek için)
+            event.target.value = '';
+        }
+
+        async function exportToPDF() {
+            const wasMode = document.body.getAttribute('data-mode');
+            const wasDark = document.documentElement.classList.contains('dark');
+            
+            // Geçici olarak PDF için aydınlık moda geçiş
+            setMode('light');
+            
+            // PDF'te görünmesini istemediğimiz elementleri gizle (.pdf-hide sınıfına sahip olanlar)
+            document.querySelectorAll('.pdf-hide').forEach(el => el.classList.add('hidden'));
+
+            const element = document.getElementById('historySection');
+            const opt = {
+                margin:       10,
+                filename:     'Vardiya_Raporu.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
+                pagebreak:    { mode: ['css', 'legacy'], avoid: '.page-break-avoid' }
             };
+
+            try {
+                // PDF'i görsel olarak blob (veri) formatında oluşturuyoruz
+                const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+                
+                // PDF oluşturma işlemi bittikten hemen sonra arayüzü eski temasına çeviriyoruz
+                document.querySelectorAll('.pdf-hide').forEach(el => el.classList.remove('hidden'));
+                if (wasDark) setMode('dark');
+                else if (wasMode) setMode(wasMode);
+                else setMode('light');
+                
+                // --- ARKA PLANDA JSON GİZLEME (PDF-LIB) ---
+                
+                // Oluşan görsel PDF dosyasını ArrayBuffer olarak okuyoruz
+                const arrayBuffer = await pdfBlob.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                
+                // Uygulamanın anlık tüm verilerini (state) JSON string'ine çeviriyoruz
+                const state = { settings, staff, acceptedWeeks, monthlyManualData };
+                const stateJson = JSON.stringify(state);
+                
+                // JSON string'i PDF'in görünmez bir meta verisine (Subject/Konu) gömüyoruz
+                pdfDoc.setSubject(stateJson);
+                
+                // Üzerine metadata eklenmiş yeni PDF dosyasını tekrar byte formatına çeviriyoruz
+                const pdfBytes = await pdfDoc.save();
+                const finalPdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+                
+                // Son olarak bu gizli veri taşıyan PDF'i indiriyoruz
+                await saveFileAs(finalPdfBlob, 'Vardiya_Raporu.pdf', 'PDF Belgesi', '.pdf', 'application/pdf');
+                
+            } catch (err) {
+                console.error("PDF oluşturulurken hata:", err);
+                document.querySelectorAll('.pdf-hide').forEach(el => el.classList.remove('hidden'));
+                if (wasDark) setMode('dark');
+                else if (wasMode) setMode(wasMode);
+                else setMode('light');
+            }
+        }
+
+        async function exportToExcel() {
+            if (acceptedWeeks.length === 0) {
+                alert("Dışa aktarılacak veri yok!");
+                return;
+            }
+            
+            const ws_data = [["Personel", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar", "Toplam Saat"]];
+            
+            acceptedWeeks.forEach(week => {
+                ws_data.push([`Hafta: ${week.startDateStr} - ${week.endDateStr}`]);
+                staff.forEach(p => {
+                    const row = [p.name];
+                    daysOfWeek.forEach(day => {
+                        const shifts = week.schedule.filter(s => s.personId === p.id && s.shift.day === day).map(s => s.shift.time);
+                        row.push(shifts.join(", ") || "-");
+                    });
+                    row.push((week.weeklyHours[p.id] || 0) + "sa");
+                    ws_data.push(row);
+                });
+                ws_data.push([]); 
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Vardiya");
+            
+            // Excel'i blob veri olarak çıkarıp kaydet
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            
+            await saveFileAs(blob, 'Vardiya_Cizelgesi.xlsx', 'Excel Dosyası', '.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         }
     </script>
 </body>
